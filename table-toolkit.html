@@ -1,0 +1,891 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Zavod Table Kit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#f4f5f7; --surface:#fff; --border:#e5e7eb; --border-strong:#d6dae1;
+  --text:#1f2937; --text-2:#4b5563; --muted:#8a919e;
+  --accent:#2563eb; --accent-bg:#eaf0fe; --accent-hover:#1d4ed8;
+  --green:#22c55e; --yellow:#f5b301; --red:#ef4444; --orange:#f97316;
+  --hover:#f3f4f6; --row-hover:#f8f9fb; --sel:#eef4ff;
+  --shadow:0 10px 30px rgba(17,24,39,.14), 0 2px 6px rgba(17,24,39,.06);
+  --header-h:52px; --subbar-h:46px;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:13px/1.45 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+svg{display:block;flex:none}
+:focus-visible{outline:2px solid var(--accent);outline-offset:1px;border-radius:6px}
+mark{background:#fff1b8;color:inherit;border-radius:2px;padding:0 1px}
+a.link,.link{color:var(--accent);text-decoration:none;cursor:pointer}
+.link:hover{text-decoration:underline}
+
+/* ---------- shell (static copy of the layout) ---------- */
+.hdr{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:var(--surface);border-bottom:1px solid var(--border)}
+.top{height:var(--header-h);display:flex;align-items:center;gap:8px;padding:0 16px;border-bottom:1px solid var(--border)}
+.subbar{height:var(--subbar-h);display:flex;align-items:center;gap:10px;padding:0 16px;background:#fafbfc}
+.logo{font-weight:700;font-size:17px;letter-spacing:-.02em;color:#111827;white-space:nowrap;margin-right:6px;border:0;background:none;padding:0}
+.logo .dot{color:var(--orange)} .logo .g{color:#9ca3af;font-weight:500}
+.tools-btn{display:flex;align-items:center;gap:7px;height:32px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;white-space:nowrap;color:var(--text-2)}
+.divider{width:1px;height:22px;background:var(--border);margin:0 4px}
+.topnav{display:flex;align-items:center;gap:2px;flex:1;min-width:0;overflow:hidden}
+.navitem{height:32px;padding:0 10px;border:0;border-radius:6px;background:transparent;white-space:nowrap;color:var(--text-2);display:inline-flex;align-items:center;gap:4px}
+.navitem:hover{background:var(--hover);color:var(--text)}
+.navitem.active{background:var(--accent-bg);color:var(--accent);font-weight:500}
+.badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--orange);color:#fff;font-size:11px;font-weight:600;margin-left:4px}
+.top-right{display:flex;align-items:center;gap:10px;margin-left:auto;flex:none}
+.team-btn{height:34px;display:flex;align-items:center;gap:8px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff}
+.team-btn .lbl{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;line-height:1}
+.team-btn .val{font-weight:500;line-height:1.1;white-space:nowrap}
+.team-btn .col{display:flex;flex-direction:column;gap:3px;text-align:left}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:600;border:0}
+.pselect{width:960px;max-width:calc(100vw - 32px)}
+.pselect .field{display:flex;align-items:center;gap:8px;height:34px;padding:0 10px;border:1px solid var(--border-strong);border-radius:8px;background:#fff;color:var(--muted)}
+.main{padding:18px 20px 90px;min-width:0}
+
+/* ---------- page head + toolbar ---------- */
+.page-head{display:flex;align-items:center;gap:14px;margin-bottom:12px;flex-wrap:wrap}
+.page-head h1{font-size:20px;font-weight:600;margin:0;letter-spacing:-.01em}
+.seg{display:inline-flex;background:#eceef2;border-radius:8px;padding:2px}
+.seg button{height:26px;padding:0 10px;border:0;border-radius:6px;background:transparent;color:var(--text-2);font-size:12.5px}
+.seg button.on{background:#fff;color:var(--text);font-weight:500;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.spacer{flex:1}
+.btn{height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--border);background:#fff;display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text);white-space:nowrap;position:relative}
+.btn:hover{background:#fafafa;border-color:var(--border-strong)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:500}
+.btn.primary:hover{background:var(--accent-hover)}
+.btn.on{background:var(--accent-bg);border-color:#c7d7fe;color:var(--accent)}
+.btn.icon{width:32px;padding:0;justify-content:center;color:var(--text-2)}
+.btn .cnt{background:var(--accent);color:#fff;border-radius:9px;min-width:16px;height:16px;font-size:10.5px;display:inline-grid;place-items:center;padding:0 4px;font-weight:600}
+.toolbar{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.search{flex:1;min-width:260px;max-width:560px;height:34px;border:1px solid var(--border);border-radius:8px;padding:0 10px;background:#fff;display:flex;align-items:center;gap:8px;color:var(--muted)}
+.search:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.14)}
+.search input{flex:1;border:0;outline:0;background:none;min-width:0;color:var(--text)}
+.search input::placeholder{color:var(--muted)}
+.search .hits{font-size:12px;white-space:nowrap}
+.iconbtn{width:22px;height:22px;border:0;background:transparent;border-radius:5px;color:var(--muted);display:grid;place-items:center;flex:none}
+.iconbtn:hover{background:var(--hover);color:var(--text)}
+.tgroup{display:inline-flex;gap:0}
+.tgroup .btn{border-radius:0;margin-left:-1px}
+.tgroup .btn:first-child{border-radius:8px 0 0 8px;margin-left:0}
+.tgroup .btn:last-child{border-radius:0 8px 8px 0}
+
+/* chips */
+.chips{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:10px;min-height:26px}
+.chip{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 6px 0 10px;border-radius:13px;background:var(--accent-bg);color:#1e40af;font-size:12px;border:1px solid #d5e2fd;cursor:pointer}
+.chip:hover{border-color:#a8c1fb}
+.chip b{font-weight:500;color:#1e3a8a}
+.chip .x{width:16px;height:16px;border-radius:50%;display:grid;place-items:center;color:#1e40af}
+.chip .x:hover{background:#c7d7fe}
+.chips .clear{color:var(--muted);font-size:12px;border:0;background:none;padding:0 4px}
+.chips .clear:hover{color:var(--red)}
+.chips .lbl{color:var(--muted);font-size:12px}
+
+/* ---------- table ---------- */
+.card{background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.tablewrap{overflow:auto;max-height:calc(100vh - 300px);position:relative}
+table{border-collapse:separate;border-spacing:0;font-size:12.5px;table-layout:fixed}
+th,td{padding:9px 12px;border-bottom:1px solid #eef0f3;vertical-align:top;text-align:left;overflow:hidden;text-overflow:ellipsis;background:#fff}
+thead th{position:sticky;top:0;z-index:3;background:#fafbfc;border-bottom:1px solid var(--border);font-weight:600;color:var(--text-2);font-size:12px;white-space:nowrap;padding:0;height:38px;user-select:none}
+th .thc{display:flex;align-items:center;gap:4px;height:38px;padding:0 8px 0 12px;position:relative}
+th .thl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;cursor:pointer;display:flex;align-items:center;gap:4px}
+th.nosort .thl{cursor:default}
+th .thl:hover{color:var(--text)}
+th .sarr{color:var(--accent);display:none}
+th.sorted .sarr{display:block}
+th .mbtn{width:22px;height:22px;border:0;background:none;border-radius:5px;color:var(--muted);display:grid;place-items:center;opacity:0;flex:none}
+th:hover .mbtn,th.filtered .mbtn,th.menu-open .mbtn{opacity:1}
+th.filtered .mbtn{color:var(--accent);background:var(--accent-bg)}
+th .mbtn:hover{background:var(--hover);color:var(--text)}
+th .rz{position:absolute;right:-3px;top:0;width:7px;height:100%;cursor:col-resize;z-index:2}
+th .rz:hover,th .rz.on{background:linear-gradient(to right,transparent 2px,var(--accent) 2px,var(--accent) 4px,transparent 4px)}
+th.pinned,td.pinned{position:sticky;z-index:2}
+thead th.pinned{z-index:4}
+th.pinned-last,td.pinned-last{border-right:1px solid var(--border)}
+.tablewrap.scrolled th.pinned-last,.tablewrap.scrolled td.pinned-last{box-shadow:4px 0 8px -4px rgba(17,24,39,.12)}
+tbody tr:hover td{background:var(--row-hover)}
+tbody tr.sel td{background:var(--sel)}
+tbody tr:last-child td{border-bottom:0}
+td.num,th.num .thc{text-align:right;justify-content:flex-end;font-variant-numeric:tabular-nums}
+th.num .thl{justify-content:flex-end}
+td.muted{color:var(--muted)}
+td.chk,th.chk{width:40px;padding:0;text-align:center;vertical-align:middle}
+td.chk input,th.chk input{width:15px;height:15px;margin:0;accent-color:var(--accent);cursor:pointer;vertical-align:middle}
+.compact th,.compact td{padding-top:5px;padding-bottom:5px}
+.compact thead th{height:32px} .compact th .thc{height:32px}
+.compact .dom{line-height:1.35}
+.id{color:var(--muted);font-variant-numeric:tabular-nums}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);flex:none;vertical-align:middle}
+.dot.y{background:var(--yellow)} .dot.r{background:var(--red)} .dot.off{background:#c9cdd4}
+.st{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.chipv{display:inline-block;padding:2px 8px;border-radius:6px;background:#eef2f7;color:#334155;font-size:11.5px;white-space:nowrap}
+.dom{white-space:nowrap;line-height:1.5;overflow:hidden;text-overflow:ellipsis}
+.dom .s{color:var(--muted);font-size:11px;margin-left:6px}
+.pname{font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.dash{color:#c0c5cd}
+.act{color:var(--muted);display:flex;gap:2px;justify-content:flex-end}
+.act .iconbtn{opacity:0}
+tr:hover .act .iconbtn{opacity:1}
+.empty{padding:48px 20px;text-align:center;color:var(--muted)}
+.empty b{display:block;color:var(--text);font-weight:600;margin-bottom:4px}
+
+/* footer / pagination */
+.tfoot{display:flex;align-items:center;gap:14px;padding:10px 14px;border-top:1px solid var(--border);color:var(--muted);font-size:12px;flex-wrap:wrap;background:#fff}
+.tfoot select{height:28px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:12px;color:var(--text-2);padding:0 6px}
+.pages{display:flex;gap:2px;margin-left:auto}
+.pages button{min-width:28px;height:28px;padding:0 6px;border:1px solid transparent;border-radius:6px;background:none;color:var(--text-2);font-size:12px;font-variant-numeric:tabular-nums}
+.pages button:hover{background:var(--hover)}
+.pages button.on{background:var(--accent-bg);color:var(--accent);font-weight:600}
+.pages button:disabled{color:#c0c5cd;background:none;cursor:default}
+.pages .dots{min-width:20px;display:grid;place-items:center;color:var(--muted)}
+
+/* popovers */
+.pop{position:fixed;z-index:100;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow);padding:6px;min-width:220px;max-width:340px}
+.pop .pi{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;white-space:nowrap;width:100%;border:0;background:none;text-align:left;color:var(--text);font-size:12.5px}
+.pop .pi:hover{background:var(--hover)}
+.pop .pi.on{color:var(--accent);background:var(--accent-bg);font-weight:500}
+.pop .pi.danger{color:var(--red)}
+.pop .pi svg{color:var(--muted)} .pop .pi.on svg{color:var(--accent)}
+.pop .pi .k{margin-left:auto;color:var(--muted);font-size:11px}
+.pop hr{border:0;border-top:1px solid var(--border);margin:6px 0}
+.pop .ph{padding:6px 10px 4px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;display:flex;justify-content:space-between;gap:8px}
+.pop .ph .link{text-transform:none;letter-spacing:0}
+.pop .fsearch{width:100%;height:30px;border:1px solid var(--border);border-radius:6px;padding:0 8px;margin:2px 0 6px;outline:0}
+.pop .fsearch:focus{border-color:var(--accent)}
+.flist{max-height:240px;overflow:auto;display:flex;flex-direction:column;gap:1px}
+.flist label{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;cursor:pointer;font-size:12.5px}
+.flist label:hover{background:var(--hover)}
+.flist input{width:14px;height:14px;margin:0;accent-color:var(--accent)}
+.flist .v{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.flist .c{color:var(--muted);font-size:11.5px;font-variant-numeric:tabular-nums}
+.flist label.zero{color:var(--muted)}
+.presets{display:flex;flex-wrap:wrap;gap:4px;padding:2px 4px 6px}
+.presets button{height:26px;padding:0 9px;border:1px solid var(--border);border-radius:13px;background:#fff;font-size:12px;color:var(--text-2)}
+.presets button.on{background:var(--accent-bg);border-color:#c7d7fe;color:var(--accent);font-weight:500}
+.range{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center;padding:2px 4px 6px;color:var(--muted)}
+.range input{height:30px;border:1px solid var(--border);border-radius:6px;padding:0 8px;width:100%;min-width:0;outline:0;font-size:12.5px}
+.range input:focus{border-color:var(--accent)}
+.radios{display:flex;flex-direction:column;gap:2px;padding:0 4px 4px}
+.radios label{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:6px;cursor:pointer;font-size:12.5px}
+.radios label:hover{background:var(--hover)}
+.radios input{margin:0;accent-color:var(--accent)}
+.pop .foot{display:flex;justify-content:space-between;align-items:center;padding:6px 4px 2px;gap:8px}
+.pop .foot .link{font-size:12px}
+.pop .note{padding:4px 10px 6px;color:var(--muted);font-size:11.5px}
+/* columns popover */
+.cols li{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:6px;list-style:none;font-size:12.5px;cursor:grab}
+.cols li:hover{background:var(--hover)}
+.cols li.dragging{opacity:.4}
+.cols li.over{box-shadow:inset 0 2px 0 var(--accent)}
+.cols{margin:0;padding:0;max-height:320px;overflow:auto}
+.cols .grip{color:#c0c5cd;cursor:grab}
+.cols input{width:14px;height:14px;margin:0;accent-color:var(--accent)}
+.cols .nm{flex:1}
+.cols .pinb{width:22px;height:22px;border:0;background:none;border-radius:5px;color:#c0c5cd;display:grid;place-items:center}
+.cols .pinb.on,.cols .pinb:hover{color:var(--accent);background:var(--accent-bg)}
+.cols li.fixed{color:var(--muted);cursor:default}
+/* views */
+.vname{display:flex;gap:6px;padding:4px}
+.vname input{flex:1;height:30px;border:1px solid var(--border);border-radius:6px;padding:0 8px;outline:0;min-width:0}
+.vname input:focus{border-color:var(--accent)}
+.vname .btn{height:30px}
+.pop .pi .del{margin-left:auto;width:20px;height:20px;border-radius:5px;display:grid;place-items:center;color:#c0c5cd;opacity:0}
+.pop .pi:hover .del{opacity:1}
+.pop .pi .del:hover{color:var(--red);background:#fee2e2}
+/* bulk bar */
+.bulk{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:90;background:#111827;color:#fff;border-radius:12px;padding:8px 8px 8px 16px;display:flex;align-items:center;gap:6px;box-shadow:0 12px 32px rgba(17,24,39,.3);font-size:12.5px;white-space:nowrap;max-width:calc(100vw - 32px)}
+.bulk b{font-weight:600;margin-right:6px}
+.bulk .link{color:#93c5fd}
+.bulk .bb{height:30px;padding:0 10px;border:0;border-radius:8px;background:rgba(255,255,255,.08);color:#fff;font-size:12.5px;display:inline-flex;align-items:center;gap:6px}
+.bulk .bb:hover{background:rgba(255,255,255,.16)}
+.bulk .bb.danger:hover{background:#7f1d1d}
+.bulk .sep{width:1px;height:20px;background:rgba(255,255,255,.15);margin:0 4px}
+.bulk .x{width:30px;height:30px;border:0;background:none;color:#9ca3af;border-radius:8px;display:grid;place-items:center}
+.bulk .x:hover{background:rgba(255,255,255,.1);color:#fff}
+/* toast */
+.toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);z-index:120;background:#fff;border:1px solid var(--border);box-shadow:var(--shadow);border-radius:10px;padding:10px 14px;font-size:12.5px;display:flex;gap:8px;align-items:center;color:var(--text);pointer-events:none}
+.toast .ok{color:var(--green)}
+.kbd{font:11px/1 ui-monospace,Menlo,monospace;background:#f3f4f6;border:1px solid var(--border);border-radius:4px;padding:2px 5px;color:var(--text-2)}
+@media (max-width:820px){.team-btn .col{display:none}.tools-btn span{display:none}.tablewrap{max-height:none}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="hdr">
+  <header class="top">
+    <button class="logo">zavod<span class="dot">.</span><span class="g">guru</span></button>
+    <button class="tools-btn"><svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect width="4" height="4" rx="1"/><rect x="5" width="4" height="4" rx="1"/><rect x="10" width="4" height="4" rx="1"/><rect y="5" width="4" height="4" rx="1"/><rect x="5" y="5" width="4" height="4" rx="1"/><rect x="10" y="5" width="4" height="4" rx="1"/><rect y="10" width="4" height="4" rx="1"/><rect x="5" y="10" width="4" height="4" rx="1"/><rect x="10" y="10" width="4" height="4" rx="1"/></svg><span>Все инструменты</span></button>
+    <div class="divider"></div>
+    <nav class="topnav"><button class="navitem active">Проекты</button><button class="navitem">Домены</button><button class="navitem">Схемы</button><button class="navitem">Казино</button><button class="navitem">Задачи</button><button class="navitem">Выкуп доменов<span class="badge">28</span></button><button class="navitem">Мониторинг</button></nav>
+    <div class="top-right">
+      <button class="team-btn"><span class="col"><span class="lbl">Показывать данные</span><span class="val">Команда Кости</span></span><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5l3 3 3-3"/></svg></button>
+      <button class="avatar">С</button>
+    </div>
+  </header>
+  <div class="subbar"><div class="pselect"><div class="field"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14" stroke-linecap="round"/></svg>Выбрать проект: название или домен…</div></div></div>
+</div>
+
+<main class="main" id="main">
+  <div class="page-head">
+    <h1>Проекты</h1>
+    <div class="seg" id="seg"></div>
+    <button class="btn" id="viewsBtn"></button>
+    <div class="spacer"></div>
+    <button class="btn primary">+ Добавить проект</button>
+  </div>
+  <div class="toolbar" id="toolbar"></div>
+  <div class="chips" id="chips"></div>
+  <div class="card">
+    <div class="tablewrap" id="tablewrap"></div>
+    <div class="tfoot" id="tfoot"></div>
+  </div>
+</main>
+<div id="pop"></div>
+<div id="bulk"></div>
+<div id="toast"></div>
+
+<script>
+/* =========================================================
+   DATA (synthetic, seeded)
+   ========================================================= */
+const TODAY = new Date(2026, 8, 23);
+const DAY = 86400000;
+const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const fmtDate = s => s ? `${s.slice(8, 10)}.${s.slice(5, 7)}.${s.slice(0, 4)}` : '';
+const fromRu = s => { const [d, m, y] = s.split('.'); return `${y}-${m}-${d}`; };
+const fmtNum = n => n == null ? '' : n.toLocaleString('ru-RU');
+let _s = 20260923; const R = () => { _s = (_s * 1664525 + 1013904223) >>> 0; return _s / 4294967296; };
+const pick = a => a[Math.floor(R() * a.length)];
+const rint = (a, b) => a + Math.floor(R() * (b - a + 1));
+
+const REAL = [
+  [489, 'y', 'Legální online casino', [], '23.09.2026', '23.09.2026'],
+  [487, 'g', 'Nejlepší Euro online casino pro české hráče', [['prehledcasin.cz', 0, 0], ['www.brideadvisor.cz', 0, 0]], '23.09.2026', '23.09.2026'],
+  [486, 'g', 'Cazinouri online noi în România', [['www.restaurantamuse.ro', 0, 0], ['noicazinourionline-romania.ro', 0, 0]], '22.09.2026', '23.09.2026'],
+  [485, 'g', 'Top cazinouri online Romania', [['topcazinourionline-romania.ro', 0, 0], ['sperantavietii.ro', 0, 0]], '22.09.2026', '23.09.2026'],
+  [484, 'y', 'Cazinouri online noi în România', [['refmarosmezo.ro', null], ['cazinourionlinenoi-românia.ro', null]], '22.09.2026', '23.09.2026'],
+  [483, 'g', 'Cazinouri online străine pentru jucătorii din România', [['pnt-maniu-mihalache.ro', null], ['străinecazinourionline-jucătoriiromânia.ro', null]], '22.09.2026', '23.09.2026'],
+  [482, 'y', 'Cazinouri online străine pentru jucătorii români', [['cazinouristrăine-jucătoriiromâni.ro', null], ['www.caminul-phillip.ro', null]], '22.09.2026', '23.09.2026'],
+  [476, 'y', 'Nya online casinon', [], '22.09.2026', '22.09.2026'],
+  [475, 'g', 'Nové české online casino', [['onlinecasinavcesku.cz', 0, 0], ['www.golsport.cz', 0, 0]], '22.09.2026', '22.09.2026'],
+  [471, 'g', 'Nejlepší zahraniční casino', [['recenzecasin-cz.cz', 0, 0], ['www.reklamni-tetovani.cz', 0, 0]], '22.09.2026', '23.09.2026'],
+  [451, 'g', 'Casino bez ověření bankovního účtu', [['casinoindex.cz', 0, 0], ['hrackyhracky.cz', 9, 0]], '22.09.2026', '23.09.2026'],
+  [448, 'g', 'paysafecard online casino', [['casinofokus.cz', 0, 0], ['www.orl2025.cz', 1, 0]], '21.09.2026', '22.09.2026'],
+  [447, 'g', 'nové české online casino', [['casinometr.cz', 0, 0], ['mapovani-kko.cz', 2, 0]], '21.09.2026', '22.09.2026'],
+  [442, 'g', 'paysafecard online casino', [['www.penzionjanota.cz', 0, 0], ['srovnanionlinecasin.cz', 1, 0]], '17.09.2026', '22.09.2026'],
+  [441, 'g', 'zahraniční online kasina', [['na-pc.cz', 0, 0], ['prehledonlinecasin.cz', 0, 0]], '17.09.2026', '17.09.2026'],
+  [440, 'g', 'internetové kasína', [['www.penzion-salamander.sk', 4, 0], ['internetove-kasina.sk', 0, 0]], '17.09.2026', '17.09.2026'],
+  [439, 'g', 'Nové online kasína na Slovensku', [['probiotikapredeti.sk', 0, 0], ['nove-online-kasina-na-slovensku.sk', 0, 0]], '17.09.2026', '17.09.2026'],
+  [438, 'g', 'online kasína na slovensku', [['motyliazahrada.sk', 5, 0], ['onlinekasina-na-slovensku.sk', 0, 0]], '17.09.2026', '17.09.2026'],
+  [437, 'g', 'nové české online casino', [['www.pracovitaberuska.cz', 0, 0], ['hodnocenionlinecasin.cz', null]], '17.09.2026', '17.09.2026'],
+];
+const LANGS = [
+  { tld: 'cz', names: ['Nejlepší online casino', 'Nové české online casino', 'Casino bez ověření účtu', 'paysafecard online casino', 'zahraniční online kasina', 'Online casino bonus bez vkladu', 'Casino s českou licencí', 'Rychlé výplaty casino'], w: ['casino', 'kasina', 'recenze', 'bonus', 'prehled', 'srovnani', 'hodnoceni', 'nejlepsi', 'online', 'ceske'] },
+  { tld: 'ro', names: ['Cazinouri online noi în România', 'Top cazinouri online Romania', 'Cazinouri online străine', 'Bonus fără depunere cazino', 'Cazinouri cu retragere rapidă', 'Păcănele online gratis'], w: ['cazino', 'cazinouri', 'online', 'romania', 'bonus', 'top', 'noi', 'pacanele', 'jocuri'] },
+  { tld: 'sk', names: ['Nové online kasína na Slovensku', 'online kasína na slovensku', 'internetové kasína', 'Kasíno bonus bez vkladu', 'Najlepšie online kasíno'], w: ['kasina', 'kasino', 'online', 'slovensko', 'bonus', 'najlepsie', 'nove', 'hodnotenie'] },
+  { tld: 'se', names: ['Nya online casinon', 'Casino utan svensk licens', 'Bästa online casino', 'Casino med snabba uttag', 'Free spins utan insättning'], w: ['casino', 'casinon', 'nya', 'basta', 'bonus', 'spel', 'utan', 'licens'] },
+  { tld: 'pl', names: ['Nowe kasyna online', 'Kasyno online bonus bez depozytu', 'Legalne kasyno online', 'Ranking kasyn internetowych'], w: ['kasyno', 'kasyna', 'online', 'bonus', 'ranking', 'legalne', 'nowe', 'gry'] },
+  { tld: 'fi', names: ['Uudet nettikasinot', 'Nettikasinot ilman rekisteröitymistä', 'Parhaat pikakasinot', 'Kasinobonukset 2026'], w: ['kasino', 'nettikasinot', 'pikakasino', 'bonus', 'uudet', 'parhaat', 'ilman'] },
+];
+const DECOY = ['penzion', 'restaurant', 'hotel', 'salon', 'zahrada', 'foto', 'autoservis', 'kvetiny', 'sport', 'klub', 'studio', 'pekarna', 'dental', 'fitness', 'travel', 'garden', 'music', 'lekarna', 'domov', 'skola'];
+const BRANDS = ['Betano', 'Superbet', 'Fortuna', 'Tipsport', 'LeoVegas', 'Unibet', 'Mr Green', 'Bet365'];
+const TEMPLATES = ['Дженерик', 'Дженерик', 'Дженерик', 'Дженерик', 'Моно', 'Моно', 'Ревью', 'Лендинг'];
+const SERVERS = ['srv-de-01', 'srv-de-02', 'srv-nl-01', 'srv-fi-01', 'srv-us-01', 'srv-pl-01'];
+
+function host(L, real) {
+  const n = rint(1, 3);
+  let s = real ? Array.from({ length: n }, () => pick(L.w)).join(pick(['', '-', ''])) : pick(DECOY) + pick(['', '-', '']) + pick(['plus', 'praha', 'brno', 'city', 'top', String(rint(2020, 2026)), 'pro', 'shop']);
+  if (R() < .3) s = 'www.' + s;
+  return s + '.' + (R() < .12 ? pick(['com', 'eu', 'net']) : L.tld);
+}
+function mk(id) {
+  const L = pick(LANGS);
+  const st = R() < .7 ? 'g' : R() < .67 ? 'y' : 'r';
+  const created = new Date(TODAY.getTime() - rint(0, 480) * DAY);
+  const updated = new Date(created.getTime() + Math.floor(R() * (TODAY - created)));
+  const nDom = R() < .12 ? 0 : R() < .7 ? 2 : R() < .55 ? 1 : 3;
+  const domains = Array.from({ length: nDom }, (_, i) => {
+    const connected = st === 'r' ? R() < .4 : R() < .85;
+    const imp = connected ? (R() < .55 ? rint(0, 9) : R() < .8 ? rint(10, 400) : rint(400, 12000)) : null;
+    return { host: host(L, i === 0 || R() < .5), connected, imp, clk: imp == null ? null : Math.floor(imp * R() * .12) };
+  });
+  const conn = domains.filter(d => d.connected);
+  return row({
+    id, status: st, name: pick(L.names), domains, svc: nDom === 0,
+    brand: R() < .6 ? null : pick(BRANDS), template: pick(TEMPLATES), server: nDom === 0 ? null : pick(SERVERS),
+    impressions: conn.length ? conn.reduce((a, d) => a + d.imp, 0) : null, clicks: conn.length ? conn.reduce((a, d) => a + d.clk, 0) : null,
+    created: iso(created), updated: iso(updated), alerts: st === 'g' ? (R() < .06 ? 1 : 0) : rint(1, 3), archived: R() < .1,
+  });
+}
+function row(r) { r.hay = (r.name + ' ' + r.domains.map(d => d.host).join(' ') + ' #' + r.id).toLowerCase(); return r; }
+const ROWS = [
+  ...REAL.map(([id, st, name, d, c, m]) => {
+    const domains = d.map(([h, imp, clk]) => ({ host: h, connected: imp != null, imp, clk }));
+    const conn = domains.filter(x => x.connected);
+    return row({ id, status: st, name, domains, svc: d.length === 0, brand: null, template: 'Дженерик', server: d.length ? 'srv-de-01' : null,
+      impressions: conn.length ? conn.reduce((a, x) => a + x.imp, 0) : null, clicks: conn.length ? conn.reduce((a, x) => a + x.clk, 0) : null,
+      created: fromRu(c), updated: fromRu(m), alerts: st === 'y' ? 1 : 0, archived: false });
+  }),
+  ...Array.from({ length: 570 }, (_, i) => mk(436 - i)),
+];
+
+/* =========================================================
+   COLUMNS
+   ========================================================= */
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function hl(text, q) {
+  if (!q) return esc(text);
+  const i = text.toLowerCase().indexOf(q.toLowerCase());
+  if (i < 0) return esc(text);
+  return esc(text.slice(0, i)) + '<mark>' + esc(text.slice(i, i + q.length)) + '</mark>' + esc(text.slice(i + q.length));
+}
+const STATUS = { g: 'Активен', y: 'Требует внимания', r: 'Ошибка' };
+const COLUMNS = [
+  { key: 'id', label: 'ID', type: 'number', width: 72, get: r => r.id, render: r => `<span class="id">${r.id}</span>`, num: false, csv: r => r.id },
+  { key: 'status', label: 'Статус', type: 'enum', width: 150, get: r => r.status, labels: STATUS, order: ['g', 'y', 'r'],
+    render: r => `<span class="st"><span class="dot ${r.status}"></span>${STATUS[r.status]}</span>`, csv: r => STATUS[r.status],
+    optHtml: v => `<span class="dot ${v}"></span>${STATUS[v]}` },
+  { key: 'brand', label: 'Бренд', type: 'enum', width: 110, get: r => r.brand ?? '', labels: { '': '— без бренда' }, render: r => r.brand ? esc(r.brand) : '<span class="dash">—</span>', csv: r => r.brand ?? '' },
+  { key: 'name', label: 'Название', type: 'text', width: 320, primary: true, get: r => r.name, render: (r, q) => `<span class="pname" title="${esc(r.name)}">${hl(r.name, q)}</span>`, csv: r => r.name },
+  { key: 'template', label: 'Шаблон', type: 'enum', width: 120, get: r => r.template, render: r => `<span class="chipv">${esc(r.template)}</span>`, csv: r => r.template },
+  { key: 'domains', label: 'Домены', type: 'list', width: 300, sortable: false, filterable: false,
+    render: (r, q) => r.svc ? '<span class="link">служебная ссылка</span>' : r.domains.map(d => `<div class="dom" title="${esc(d.host)}">${hl(d.host, q)}<span class="s">${d.connected ? `${fmtNum(d.imp)} показ. · ${fmtNum(d.clk)} кл.` : '(Не подключен)'}</span></div>`).join(''),
+    csv: r => r.svc ? 'служебная ссылка' : r.domains.map(d => d.host).join(', ') },
+  { key: 'server', label: 'Сервер', type: 'enum', width: 110, defaultHidden: true, get: r => r.server ?? '', labels: { '': '— нет' }, render: r => r.server ? `<span class="id">${esc(r.server)}</span>` : '<span class="dash">—</span>', csv: r => r.server ?? '' },
+  { key: 'impressions', label: 'Показы', type: 'number', width: 96, num: true, get: r => r.impressions, render: r => r.impressions == null ? '<span class="dash">—</span>' : fmtNum(r.impressions), csv: r => r.impressions ?? '' },
+  { key: 'clicks', label: 'Клики', type: 'number', width: 84, num: true, get: r => r.clicks, render: r => r.clicks == null ? '<span class="dash">—</span>' : fmtNum(r.clicks), csv: r => r.clicks ?? '' },
+  { key: 'alerts', label: 'Алерты', type: 'number', width: 84, num: true, defaultHidden: true, get: r => r.alerts, render: r => r.alerts ? `<span class="badge">${r.alerts}</span>` : '<span class="dash">—</span>', csv: r => r.alerts },
+  { key: 'created', label: 'Создан', type: 'date', width: 108, get: r => r.created, render: r => `<span class="id">${fmtDate(r.created)}</span>`, csv: r => fmtDate(r.created) },
+  { key: 'updated', label: 'Изменён', type: 'date', width: 108, get: r => r.updated, render: r => `<span class="id">${fmtDate(r.updated)}</span>`, csv: r => fmtDate(r.updated) },
+  { key: 'actions', label: '', type: 'none', width: 64, sortable: false, filterable: false, fixed: true, render: () => `<div class="act"><span class="iconbtn" title="Редактировать">${I.edit}</span><span class="iconbtn" title="Ещё">${I.dots}</span></div>` },
+];
+const COL = Object.fromEntries(COLUMNS.map(c => [c.key, c]));
+const I = {
+  chev: '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5l3 3 3-3"/></svg>',
+  search: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14" stroke-linecap="round"/></svg>',
+  x: '<svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7"/></svg>',
+  up: '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10V2M2.5 5.5L6 2l3.5 3.5"/></svg>',
+  down: '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v8M2.5 6.5L6 10l3.5-3.5"/></svg>',
+  updown: '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V1.5M2 3.5l2-2 2 2M8 4v6.5M6 8.5l2 2 2-2"/></svg>',
+  filter: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M2 3h12l-4.5 5.5V13l-3-1.5V8.5z"/></svg>',
+  cols: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="2.5" width="12" height="11" rx="1.5"/><path d="M6.5 2.5v11M10 2.5v11"/></svg>',
+  dl: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5v8M5 7.5l3 3 3-3M3 13.5h10"/></svg>',
+  dense: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M2 4h12M2 7h12M2 10h12M2 13h12"/></svg>',
+  loose: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M2 3.5h12M2 8h12M2 12.5h12"/></svg>',
+  eyeoff: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8s2.5-4.5 6-4.5S14 8 14 8s-2.5 4.5-6 4.5S2 8 2 8z"/><circle cx="8" cy="8" r="1.8"/><path d="M3 13L13 3"/></svg>',
+  pin: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h4l-.5 4.5L12 9H4l2.5-2.5z"/><path d="M8 9v5"/></svg>',
+  grip: '<svg width="10" height="14" viewBox="0 0 10 14" fill="currentColor"><circle cx="3" cy="3" r="1.2"/><circle cx="7" cy="3" r="1.2"/><circle cx="3" cy="7" r="1.2"/><circle cx="7" cy="7" r="1.2"/><circle cx="3" cy="11" r="1.2"/><circle cx="7" cy="11" r="1.2"/></svg>',
+  edit: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M11.5 2.5l2 2L5 13H3v-2z"/></svg>',
+  dots: '<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><circle cx="3.5" cy="8" r="1.4"/><circle cx="8" cy="8" r="1.4"/><circle cx="12.5" cy="8" r="1.4"/></svg>',
+  check: '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5l2.5 2.5 4.5-5"/></svg>',
+  save: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><path d="M3 2.5h8l2 2v9H3z"/><path d="M5 2.5v4h6v-4M5 13.5v-4h6v4"/></svg>',
+  views: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><rect x="2" y="2.5" width="12" height="11" rx="1.5"/><path d="M2 6h12M6 6v7.5"/></svg>',
+  alert: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2l6.5 11.5H1.5z"/><path d="M8 6.5v3M8 12v.01"/></svg>',
+  reset: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a5 5 0 109-3"/><path d="M12 2v3H9"/></svg>',
+  ok: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3 3 7-7"/></svg>',
+};
+
+/* =========================================================
+   STATE
+   ========================================================= */
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('zavod.table.projects.' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('zavod.table.projects.' + k, JSON.stringify(v)); } catch (e) {} },
+};
+const DEFAULT_PROFILE = () => ({
+  order: COLUMNS.map(c => c.key), hidden: COLUMNS.filter(c => c.defaultHidden).map(c => c.key), pinned: ['id'], widths: {}, pageSize: 50, density: 'normal',
+});
+const S = {
+  tab: 'active',                    // active | archive
+  sort: { key: 'id', dir: 'desc' },
+  filters: {},                      // key -> filter state (see type)
+  q: '', page: 1, alertsOnly: false,
+  profile: Object.assign(DEFAULT_PROFILE(), store.get('profile', {})),
+  views: store.get('views', []), activeView: null,
+  selected: new Set(), menu: null, // menu: {kind:'col'|'cols'|'export'|'views'|'pagesize', key, anchor}
+  fsearch: '',
+};
+const PAGE_SIZES = [20, 50, 100, 200, 1000, 0];
+function saveProfile() { store.set('profile', S.profile); }
+
+/* ---------- URL hash <-> state (filters, sort, search, page, tab) ---------- */
+function writeHash() {
+  const p = new URLSearchParams();
+  if (S.tab !== 'active') p.set('tab', S.tab);
+  if (S.q) p.set('q', S.q);
+  if (!(S.sort.key === 'id' && S.sort.dir === 'desc')) p.set('sort', S.sort.key + ':' + S.sort.dir);
+  if (S.page > 1) p.set('page', S.page);
+  if (S.alertsOnly) p.set('alerts', '1');
+  for (const [k, f] of Object.entries(S.filters)) if (isActive(k)) p.set('f.' + k, encodeFilter(k, f));
+  const h = p.toString();
+  try { history.replaceState(null, '', h ? '#' + h : location.pathname + location.search); } catch (e) {}
+}
+function readHash() {
+  const h = location.hash.slice(1); if (!h || !h.includes('=')) return;
+  const p = new URLSearchParams(h);
+  if (p.get('tab')) S.tab = p.get('tab');
+  if (p.get('q')) S.q = p.get('q');
+  if (p.get('sort')) { const [k, d] = p.get('sort').split(':'); if (COL[k]) S.sort = { key: k, dir: d === 'asc' ? 'asc' : 'desc' }; }
+  if (p.get('page')) S.page = Math.max(1, +p.get('page') || 1);
+  if (p.get('alerts')) S.alertsOnly = true;
+  for (const [k, v] of p.entries()) if (k.startsWith('f.') && COL[k.slice(2)]) { const f = decodeFilter(k.slice(2), v); if (f) S.filters[k.slice(2)] = f; }
+}
+function encodeFilter(k, f) {
+  const t = COL[k].type;
+  if (t === 'enum') return f.values.join(',');
+  if (t === 'date') return f.preset && f.preset !== 'custom' ? f.preset : `${f.from || ''}..${f.to || ''}`;
+  if (t === 'number') return `${f.min ?? ''}..${f.max ?? ''}:${f.empty || 'any'}`;
+  return '';
+}
+function decodeFilter(k, v) {
+  const t = COL[k].type;
+  if (t === 'enum') return { values: v.split(',') };
+  if (t === 'date') { if (v.includes('..')) { const [from, to] = v.split('..'); return { preset: 'custom', from, to }; } return { preset: v }; }
+  if (t === 'number') { const [rng, empty] = v.split(':'); const [min, max] = rng.split('..'); return { min: min === '' ? null : +min, max: max === '' ? null : +max, empty: empty || 'any' }; }
+  return null;
+}
+
+/* =========================================================
+   FILTER / SORT / SEARCH ENGINE
+   ========================================================= */
+const DATE_PRESETS = { today: ['Сегодня', 0], '7d': ['7 дней', 7], '30d': ['30 дней', 30], '90d': ['90 дней', 90] };
+function isActive(k) {
+  const f = S.filters[k]; if (!f) return false;
+  const t = COL[k].type;
+  if (t === 'enum') return Array.isArray(f.values) && f.values.length < enumValues(k).length;
+  if (t === 'date') return (f.preset && f.preset !== 'custom') || !!f.from || !!f.to;
+  if (t === 'number') return f.min != null || f.max != null || (f.empty && f.empty !== 'any');
+  return false;
+}
+const _enumCache = {};
+function enumValues(k) {
+  if (_enumCache[k]) return _enumCache[k];
+  const c = COL[k]; const set = new Set(ROWS.map(c.get));
+  let vals = [...set];
+  if (c.order) vals.sort((a, b) => c.order.indexOf(a) - c.order.indexOf(b));
+  else vals.sort((a, b) => (a === '') - (b === '') || String(a).localeCompare(String(b), 'ru'));
+  return _enumCache[k] = vals;
+}
+function enumLabel(k, v) { const c = COL[k]; return (c.labels && c.labels[v]) || String(v); }
+function passFilter(k, r) {
+  if (!isActive(k)) return true;
+  const c = COL[k], f = S.filters[k], v = c.get(r);
+  if (c.type === 'enum') return f.values.includes(v);
+  if (c.type === 'date') {
+    if (f.preset && f.preset !== 'custom') { const days = DATE_PRESETS[f.preset][1]; return v >= iso(new Date(TODAY.getTime() - days * DAY)); }
+    if (f.from && v < f.from) return false;
+    if (f.to && v > f.to) return false;
+    return true;
+  }
+  if (c.type === 'number') {
+    if (f.empty === 'empty') return v == null;
+    if (f.empty === 'nonempty' && v == null) return false;
+    if (v == null) return f.min == null && f.max == null;
+    if (f.min != null && v < f.min) return false;
+    if (f.max != null && v > f.max) return false;
+    return true;
+  }
+  return true;
+}
+function baseRows(exceptKey) {
+  const q = S.q.trim().toLowerCase();
+  return ROWS.filter(r => (S.tab === 'archive') === r.archived)
+    .filter(r => !S.alertsOnly || r.alerts > 0)
+    .filter(r => !q || r.hay.includes(q))
+    .filter(r => Object.keys(S.filters).every(k => k === exceptKey || passFilter(k, r)));
+}
+function cmp(c) {
+  const g = c.get;
+  if (c.type === 'number') return (a, b) => { const x = g(a), y = g(b); if (x == null && y == null) return 0; if (x == null) return 1; if (y == null) return -1; return x - y; };
+  if (c.type === 'enum' && c.order) return (a, b) => c.order.indexOf(g(a)) - c.order.indexOf(g(b));
+  if (c.type === 'enum') return (a, b) => { const x = g(a), y = g(b); if (x === '' && y !== '') return 1; if (y === '' && x !== '') return -1; return String(x).localeCompare(String(y), 'ru'); };
+  return (a, b) => String(g(a)).localeCompare(String(g(b)), 'ru', { sensitivity: 'base' });
+}
+let _result = [];
+function compute() {
+  const rows = baseRows();
+  const c = COL[S.sort.key];
+  if (c && c.sortable !== false) { const f = cmp(c); rows.sort((a, b) => { const r = f(a, b); return (S.sort.dir === 'asc' ? r : -r) || b.id - a.id; }); }
+  _result = rows;
+  const ps = S.profile.pageSize, pages = ps ? Math.max(1, Math.ceil(rows.length / ps)) : 1;
+  if (S.page > pages) S.page = pages;
+  return rows;
+}
+function pageRows() { const ps = S.profile.pageSize; return ps ? _result.slice((S.page - 1) * ps, S.page * ps) : _result; }
+function visibleCols() {
+  const { order, hidden, pinned } = S.profile;
+  const vis = order.filter(k => !hidden.includes(k));
+  return [...pinned.filter(k => vis.includes(k)), ...vis.filter(k => !pinned.includes(k))];
+}
+function activeFilterCount() { return Object.keys(S.filters).filter(isActive).length + (S.alertsOnly ? 1 : 0); }
+
+/* =========================================================
+   RENDER
+   ========================================================= */
+const $ = s => document.querySelector(s);
+function render() { compute(); renderSeg(); renderViewsBtn(); renderToolbar(); renderChips(); renderTable(); renderFoot(); renderBulk(); renderMenu(); writeHash(); }
+
+function renderSeg() {
+  const n = t => ROWS.filter(r => (t === 'archive') === r.archived).length;
+  $('#seg').innerHTML = `<button class="${S.tab === 'active' ? 'on' : ''}" data-tab="active">Активные <span class="id">${n('active')}</span></button><button class="${S.tab === 'archive' ? 'on' : ''}" data-tab="archive">Архив <span class="id">${n('archive')}</span></button>`;
+}
+function renderViewsBtn() {
+  const v = S.views.find(x => x.id === S.activeView);
+  $('#viewsBtn').innerHTML = `${I.views} ${v ? esc(v.name) : 'Виды'} ${I.chev}`;
+  $('#viewsBtn').classList.toggle('on', !!v);
+  $('#viewsBtn').dataset.menu = 'views';
+}
+function renderToolbar() {
+  const q = S.q;
+  $('#toolbar').innerHTML = `
+    <label class="search">${I.search}<input id="q" type="search" placeholder="Поиск по названию, доменам или ID…" value="${esc(q)}" autocomplete="off">
+      ${q ? `<span class="hits">${_result.length} совп.</span><button class="iconbtn" data-clearq title="Очистить">${I.x}</button>` : '<span class="kbd">/</span>'}</label>
+    <button class="btn ${S.alertsOnly ? 'on' : ''}" data-alerts>${I.alert} С алертами</button>
+    <div class="spacer"></div>
+    <button class="btn" data-menu="cols">${I.cols} Колонки ${S.profile.hidden.length ? `<span class="cnt">${visibleCols().filter(k => !COL[k].fixed).length}</span>` : ''}</button>
+    <button class="btn icon" data-density title="${S.profile.density === 'compact' ? 'Обычные строки' : 'Компактные строки'}">${S.profile.density === 'compact' ? I.loose : I.dense}</button>
+    <button class="btn" data-menu="export">${I.dl} Экспорт</button>
+    <button class="btn icon" data-resetall title="Сбросить фильтры, сортировку и поиск">${I.reset}</button>`;
+}
+function chipLabel(k) {
+  const c = COL[k], f = S.filters[k];
+  if (c.type === 'enum') { const vals = f.values.map(v => enumLabel(k, v)); return vals.length > 2 ? `${vals.slice(0, 2).join(', ')} +${vals.length - 2}` : vals.join(', '); }
+  if (c.type === 'date') { if (f.preset && f.preset !== 'custom') return DATE_PRESETS[f.preset][0].toLowerCase(); return `${f.from ? 'с ' + fmtDate(f.from) : ''}${f.from && f.to ? ' ' : ''}${f.to ? 'по ' + fmtDate(f.to) : ''}`; }
+  if (c.type === 'number') { const parts = []; if (f.min != null || f.max != null) parts.push(`${f.min != null ? 'от ' + fmtNum(f.min) : ''}${f.min != null && f.max != null ? ' ' : ''}${f.max != null ? 'до ' + fmtNum(f.max) : ''}`); if (f.empty === 'empty') parts.push('только пустые'); if (f.empty === 'nonempty') parts.push('только непустые'); return parts.join(', '); }
+  return '';
+}
+function renderChips() {
+  const keys = Object.keys(S.filters).filter(isActive);
+  const el = $('#chips');
+  if (!keys.length && !S.alertsOnly) { el.innerHTML = ''; el.hidden = true; return; }
+  el.hidden = false;
+  el.innerHTML = `<span class="lbl">Фильтры:</span>` +
+    (S.alertsOnly ? `<span class="chip" data-alerts><b>Алерты:</b> есть<span class="x" data-alerts title="Убрать">${I.x}</span></span>` : '') +
+    keys.map(k => `<span class="chip" data-menu="col" data-key="${k}" title="Изменить фильтр"><b>${esc(COL[k].label)}:</b> ${esc(chipLabel(k))}<span class="x" data-unfilter="${k}" title="Убрать фильтр">${I.x}</span></span>`).join('') +
+    `<button class="clear" data-clearfilters>Сбросить всё</button>`;
+}
+function colWidth(k) { return S.profile.widths[k] || COL[k].width; }
+function renderTable() {
+  const cols = visibleCols(), rows = pageRows(), q = S.q.trim();
+  const pinned = S.profile.pinned.filter(k => cols.includes(k));
+  const offs = {}; let off = 40; for (const k of pinned) { offs[k] = off; off += colWidth(k); }
+  const lastPinned = pinned[pinned.length - 1];
+  const total = 40 + cols.reduce((a, k) => a + colWidth(k), 0);
+  const allSel = rows.length && rows.every(r => S.selected.has(r.id));
+  const someSel = rows.some(r => S.selected.has(r.id));
+  const th = k => {
+    const c = COL[k], sorted = S.sort.key === k && c.sortable !== false, pin = pinned.includes(k);
+    const cls = [c.num ? 'num' : '', c.sortable === false ? 'nosort' : '', sorted ? 'sorted' : '', isActive(k) ? 'filtered' : '', pin ? 'pinned' : '', k === lastPinned ? 'pinned-last' : '', S.menu && S.menu.kind === 'col' && S.menu.key === k ? 'menu-open' : ''].filter(Boolean).join(' ');
+    const sortTitle = c.sortable === false ? '' : `title="Сортировать${sorted ? (S.sort.dir === 'asc' ? ': по убыванию' : ': по возрастанию') : ''}"`;
+    return `<th class="${cls}" data-col="${k}" style="width:${colWidth(k)}px${pin ? `;left:${offs[k]}px` : ''}"><div class="thc">
+      <span class="thl" ${sortTitle} ${c.sortable === false ? '' : `data-sort="${k}"`}>${isActive(k) ? `<span style="color:var(--accent)">${I.filter}</span>` : ''}<span>${esc(c.label)}</span><span class="sarr">${sorted ? (S.sort.dir === 'asc' ? I.up : I.down) : ''}</span></span>
+      ${c.fixed ? '' : `<button class="mbtn" data-menu="col" data-key="${k}" title="Меню столбца">${I.chev}</button>`}
+      ${c.fixed ? '' : `<div class="rz" data-rz="${k}"></div>`}</div></th>`;
+  };
+  const td = (r, k) => {
+    const c = COL[k], pin = pinned.includes(k);
+    const cls = [c.num ? 'num' : '', pin ? 'pinned' : '', k === lastPinned ? 'pinned-last' : ''].filter(Boolean).join(' ');
+    return `<td class="${cls}"${pin ? ` style="left:${offs[k]}px"` : ''}>${c.render(r, q)}</td>`;
+  };
+  const body = rows.length ? rows.map(r => `<tr class="${S.selected.has(r.id) ? 'sel' : ''}" data-row="${r.id}"><td class="chk pinned" style="left:0"><input type="checkbox" data-sel="${r.id}" ${S.selected.has(r.id) ? 'checked' : ''} aria-label="Выбрать проект ${r.id}"></td>${cols.map(k => td(r, k)).join('')}</tr>`).join('')
+    : `<tr><td colspan="${cols.length + 1}"><div class="empty"><b>Ничего не найдено</b>Измените поиск или фильтры${activeFilterCount() || S.q ? ` · <span class="link" data-resetall>сбросить всё</span>` : ''}</div></td></tr>`;
+  const wrap = $('#tablewrap');
+  const sl = wrap.scrollLeft;
+  wrap.innerHTML = `<table class="${S.profile.density === 'compact' ? 'compact' : ''}" style="width:${total}px;min-width:100%">
+    <colgroup><col style="width:40px">${cols.map(k => `<col style="width:${colWidth(k)}px">`).join('')}</colgroup>
+    <thead><tr><th class="chk pinned" style="left:0"><input type="checkbox" id="selall" ${allSel ? 'checked' : ''} aria-label="Выбрать все на странице"></th>${cols.map(th).join('')}</tr></thead>
+    <tbody>${body}</tbody></table>`;
+  const sa = $('#selall'); if (sa) sa.indeterminate = !allSel && someSel;
+  wrap.scrollLeft = sl;
+  wrap.classList.toggle('scrolled', sl > 0);
+}
+function renderFoot() {
+  const n = _result.length, ps = S.profile.pageSize, pages = ps ? Math.max(1, Math.ceil(n / ps)) : 1;
+  const from = n ? (ps ? (S.page - 1) * ps + 1 : 1) : 0, to = ps ? Math.min(n, S.page * ps) : n;
+  let pg = '';
+  if (pages > 1) {
+    const set = new Set([1, pages, S.page - 1, S.page, S.page + 1, S.page - 2, S.page + 2].filter(p => p >= 1 && p <= pages));
+    const list = [...set].sort((a, b) => a - b);
+    pg = `<button data-page="${S.page - 1}" ${S.page === 1 ? 'disabled' : ''}>‹</button>` +
+      list.map((p, i) => (i && p - list[i - 1] > 1 ? '<span class="dots">…</span>' : '') + `<button data-page="${p}" class="${p === S.page ? 'on' : ''}">${p}</button>`).join('') +
+      `<button data-page="${S.page + 1}" ${S.page === pages ? 'disabled' : ''}>›</button>`;
+  }
+  $('#tfoot').innerHTML = `<span>${n ? `Показано <b style="color:var(--text);font-weight:500">${from}–${to}</b> из ${fmtNum(n)}` : 'Нет строк'}${n !== ROWS.filter(r => (S.tab === 'archive') === r.archived).length ? ` <span class="link" data-clearfilters>· показать все</span>` : ''}</span>
+    <label>Строк: <select id="pagesize">${PAGE_SIZES.map(s => `<option value="${s}" ${s === ps ? 'selected' : ''}>${s === 0 ? 'все' : s}</option>`).join('')}</select></label>
+    <div class="pages">${pg}</div>`;
+}
+function renderBulk() {
+  const n = S.selected.size, el = $('#bulk');
+  if (!n) { el.innerHTML = ''; return; }
+  const allFiltered = _result.length > n && _result.every(r => S.selected.has(r.id)) === false;
+  el.innerHTML = `<div class="bulk"><b>Выбрано ${n}</b>${_result.length > n ? `<span class="link" data-selall-filtered>выбрать все ${fmtNum(_result.length)}</span>` : ''}<span class="sep"></span>
+    <button class="bb" data-bulk="status">Сменить статус ${I.chev}</button>
+    <button class="bb" data-bulk="template">Сменить шаблон ${I.chev}</button>
+    <button class="bb" data-bulk="export">${I.dl} Экспорт выбранных</button>
+    <button class="bb danger" data-bulk="archive">${S.tab === 'archive' ? 'Вернуть из архива' : 'В архив'}</button>
+    <span class="sep"></span><button class="x" data-unselect title="Снять выделение">${I.x}</button></div>`;
+}
+
+/* ---------- popover menus ---------- */
+function openMenu(kind, key, anchor) { S.menu = { kind, key, anchor }; S.fsearch = ''; render(); }
+function closeMenu() { if (!S.menu) return; S.menu = null; render(); }
+function placeMenu(pop, anchor, alignRight) {
+  const r = anchor.getBoundingClientRect();
+  pop.style.top = (r.bottom + 6) + 'px';
+  const w = pop.offsetWidth;
+  let left = alignRight ? r.right - w : r.left;
+  left = Math.max(8, Math.min(left, window.innerWidth - w - 8));
+  pop.style.left = left + 'px';
+  const h = pop.offsetHeight; if (r.bottom + 6 + h > window.innerHeight - 8) pop.style.top = Math.max(8, r.top - 6 - h) + 'px';
+}
+function renderMenu() {
+  const el = $('#pop');
+  if (!S.menu) { el.innerHTML = ''; return; }
+  const { kind, key } = S.menu;
+  let anchor = S.menu.anchor;
+  if (!document.body.contains(anchor)) { // re-find anchor after re-render
+    anchor = kind === 'col' ? document.querySelector(`th[data-col="${key}"] .mbtn`) || document.querySelector(`.chip[data-key="${key}"]`) : document.querySelector(`[data-menu="${kind}"]`);
+    if (!anchor) { S.menu = null; el.innerHTML = ''; return; }
+    S.menu.anchor = anchor;
+  }
+  let html = '';
+  if (kind === 'col') html = colMenu(key);
+  if (kind === 'cols') html = colsMenu();
+  if (kind === 'export') html = exportMenu();
+  if (kind === 'views') html = viewsMenu();
+  if (kind === 'bulkstatus') html = `<div class="ph">Новый статус</div>${Object.entries(STATUS).map(([v, l]) => `<button class="pi" data-bulkset="status:${v}"><span class="dot ${v}"></span>${l}</button>`).join('')}`;
+  if (kind === 'bulktemplate') html = `<div class="ph">Новый шаблон</div>${[...new Set(TEMPLATES)].map(v => `<button class="pi" data-bulkset="template:${v}">${v}</button>`).join('')}`;
+  el.innerHTML = `<div class="pop" role="menu">${html}</div>`;
+  const pop = el.firstElementChild;
+  placeMenu(pop, anchor, kind === 'export' || kind === 'cols');
+  const fs = pop.querySelector('.fsearch'); if (fs && S.menu.focusSearch) { fs.focus(); fs.setSelectionRange(fs.value.length, fs.value.length); }
+  const vn = pop.querySelector('#vname'); if (vn) vn.focus();
+}
+function colMenu(k) {
+  const c = COL[k], sorted = S.sort.key === k;
+  const sortLabels = c.type === 'number' ? ['1 → 9', '9 → 1'] : c.type === 'date' ? ['Старые → новые', 'Новые → старые'] : ['А → Я', 'Я → А'];
+  let html = c.sortable === false ? `<div class="note">Сортировка по этому столбцу недоступна</div>` :
+    `<button class="pi ${sorted && S.sort.dir === 'asc' ? 'on' : ''}" data-setsort="${k}:asc">${I.up} Сортировать ${sortLabels[0]}</button>
+     <button class="pi ${sorted && S.sort.dir === 'desc' ? 'on' : ''}" data-setsort="${k}:desc">${I.down} Сортировать ${sortLabels[1]}</button>`;
+  if (c.filterable !== false && c.type !== 'text' && c.type !== 'list') {
+    html += '<hr>';
+    const f = S.filters[k];
+    if (c.type === 'enum') {
+      const vals = enumValues(k), sel = f && Array.isArray(f.values) ? f.values : vals;
+      const counts = {}; for (const r of baseRows(k)) { const v = c.get(r); counts[v] = (counts[v] || 0) + 1; }
+      const fq = S.fsearch.toLowerCase();
+      const shown = vals.filter(v => !fq || enumLabel(k, v).toLowerCase().includes(fq));
+      html += `<div class="ph"><span>Фильтр по значениям</span><span><span class="link" data-fall="${k}">все</span> · <span class="link" data-fnone="${k}">ничего</span></span></div>
+        ${vals.length > 6 ? `<input class="fsearch" data-fsearch placeholder="Найти значение…" value="${esc(S.fsearch)}">` : ''}
+        <div class="flist">${shown.map(v => `<label class="${counts[v] ? '' : 'zero'}"><input type="checkbox" data-fval="${k}" value="${esc(v)}" ${sel.includes(v) ? 'checked' : ''}><span class="v">${c.optHtml ? c.optHtml(v) : esc(enumLabel(k, v))}</span><span class="c">${counts[v] || 0}</span></label>`).join('') || '<div class="note">Нет совпадений</div>'}</div>`;
+    } else if (c.type === 'date') {
+      const preset = f && f.preset && f.preset !== 'custom' ? f.preset : (f && (f.from || f.to) ? 'custom' : 'all');
+      html += `<div class="ph">Период</div><div class="presets">
+        <button class="${preset === 'all' ? 'on' : ''}" data-fdate="${k}:all">Всё время</button>
+        ${Object.entries(DATE_PRESETS).map(([p, [l]]) => `<button class="${preset === p ? 'on' : ''}" data-fdate="${k}:${p}">${l}</button>`).join('')}</div>
+        <div class="range"><input type="date" data-ffrom="${k}" value="${esc(f && f.from || '')}" max="${iso(TODAY)}" aria-label="С"><span>—</span><input type="date" data-fto="${k}" value="${esc(f && f.to || '')}" max="${iso(TODAY)}" aria-label="По"></div>`;
+    } else if (c.type === 'number') {
+      html += `<div class="ph">Диапазон</div>
+        <div class="range"><input type="number" data-fmin="${k}" placeholder="от" value="${f && f.min != null ? f.min : ''}"><span>—</span><input type="number" data-fmax="${k}" placeholder="до" value="${f && f.max != null ? f.max : ''}"></div>
+        <div class="radios">${[['any', 'Любые значения'], ['nonempty', 'Только с данными'], ['empty', 'Только пустые (—)']].map(([v, l]) => `<label><input type="radio" name="fe-${k}" data-fempty="${k}" value="${v}" ${(f && f.empty || 'any') === v ? 'checked' : ''}>${l}</label>`).join('')}</div>`;
+    }
+    if (isActive(k)) html += `<div class="foot"><span class="link" data-unfilter="${k}">Сбросить фильтр</span><span class="note" style="padding:0">${_result.length} строк</span></div>`;
+  }
+  html += `<hr><button class="pi" data-hidecol="${k}">${I.eyeoff} Скрыть столбец</button><button class="pi ${S.profile.pinned.includes(k) ? 'on' : ''}" data-pincol="${k}">${I.pin} ${S.profile.pinned.includes(k) ? 'Отцепить' : 'Закрепить слева'}</button>`;
+  return html;
+}
+function colsMenu() {
+  const { order, hidden, pinned } = S.profile;
+  const items = [...pinned.filter(k => order.includes(k)), ...order.filter(k => !pinned.includes(k))];
+  return `<div class="ph"><span>Столбцы</span><span class="link" data-colsreset>По умолчанию</span></div>
+    <ul class="cols">${items.map(k => { const c = COL[k]; return c.fixed ? `<li class="fixed"><span class="grip" style="visibility:hidden">${I.grip}</span><input type="checkbox" checked disabled><span class="nm">Действия</span></li>` :
+      `<li draggable="true" data-drag="${k}"><span class="grip">${I.grip}</span><input type="checkbox" data-colvis="${k}" ${hidden.includes(k) ? '' : 'checked'} id="cv-${k}"><label class="nm" for="cv-${k}">${esc(c.label)}</label><button class="pinb ${pinned.includes(k) ? 'on' : ''}" data-pincol="${k}" title="${pinned.includes(k) ? 'Отцепить' : 'Закрепить слева'}">${I.pin}</button></li>`; }).join('')}</ul>
+    <div class="note">Перетащите за ${I.grip.replace('width="10" height="14"', 'width="8" height="11" style="display:inline;vertical-align:middle"')} чтобы изменить порядок. Ширина меняется за границу заголовка.</div>`;
+}
+function exportMenu() {
+  const n = S.selected.size || _result.length, cols = visibleCols().filter(k => !COL[k].fixed).length, all = COLUMNS.filter(c => !c.fixed).length;
+  return `<div class="ph">Экспорт ${S.selected.size ? `выбранных (${n})` : `${fmtNum(n)} строк`}</div>
+    <div class="note">${S.selected.size ? 'Только отмеченные строки.' : 'Все строки с учётом поиска, фильтров и сортировки, без учёта страниц.'}</div>
+    <div class="radios"><label><input type="radio" name="excols" value="visible" ${S.exportAll ? '' : 'checked'} data-excols="0">Видимые столбцы (${cols})</label><label><input type="radio" name="excols" value="all" ${S.exportAll ? 'checked' : ''} data-excols="1">Все столбцы (${all})</label></div><hr>
+    <button class="pi" data-export="xlsx">${I.dl} Скачать XLSX</button><button class="pi" data-export="csv">${I.dl} Скачать CSV <span class="k">; разделитель, UTF-8</span></button>`;
+}
+function viewsMenu() {
+  return `<div class="ph">Сохранённые виды</div>
+    <button class="pi ${!S.activeView ? 'on' : ''}" data-applyview="">${!S.activeView ? I.check : '<span style="width:12px"></span>'} Все проекты <span class="k">по умолчанию</span></button>
+    ${S.views.map(v => `<button class="pi ${S.activeView === v.id ? 'on' : ''}" data-applyview="${v.id}">${S.activeView === v.id ? I.check : '<span style="width:12px"></span>'} ${esc(v.name)}<span class="del" data-delview="${v.id}" title="Удалить вид">${I.x}</span></button>`).join('')}
+    ${S.views.length ? '' : '<div class="note">Пока нет сохранённых видов.</div>'}<hr>
+    <div class="ph">Сохранить текущий вид</div>
+    <div class="vname"><input id="vname" placeholder="Например: Румыния с алертами" maxlength="40"><button class="btn primary" data-saveview>${I.save}</button></div>
+    <div class="note">Вид запоминает поиск, фильтры, сортировку и набор столбцов.</div>`;
+}
+
+/* ---------- toast ---------- */
+let _toastT;
+function toast(msg) { const el = $('#toast'); el.innerHTML = `<div class="toast"><span class="ok">${I.ok}</span>${msg}</div>`; clearTimeout(_toastT); _toastT = setTimeout(() => el.innerHTML = '', 3200); }
+
+/* ---------- export ---------- */
+function doExport(fmt) {
+  const rows = S.selected.size ? _result.filter(r => S.selected.has(r.id)) : _result;
+  const cols = (S.exportAll ? COLUMNS.map(c => c.key) : visibleCols()).filter(k => !COL[k].fixed);
+  const head = cols.map(k => COL[k].label), data = rows.map(r => cols.map(k => COL[k].csv(r)));
+  const name = `projects_${iso(TODAY)}${S.selected.size ? '_selected' : ''}`;
+  try {
+    if (fmt === 'xlsx' && window.XLSX) {
+      const ws = XLSX.utils.aoa_to_sheet([head, ...data]); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Проекты'); XLSX.writeFile(wb, name + '.xlsx');
+    } else {
+      const csv = '﻿' + [head, ...data].map(r => r.map(v => { v = String(v ?? ''); return /[;"\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(';')).join('\r\n');
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = name + '.csv'; document.body.appendChild(a); a.click(); a.remove();
+    }
+  } catch (e) {}
+  toast(`Файл <b>${name}.${fmt}</b> сформирован: ${fmtNum(rows.length)} строк, ${cols.length} столбцов`);
+}
+
+/* =========================================================
+   EVENTS
+   ========================================================= */
+function setFilter(k, f) { S.filters[k] = f; S.page = 1; S.activeView = null; }
+function clearFilter(k) { delete S.filters[k]; S.page = 1; }
+
+document.addEventListener('click', e => {
+  const t = e.target, c = s => t.closest(s);
+  const inPop = c('#pop');
+
+  // ---- menus open/close
+  const mb = c('[data-menu]');
+  if (mb && !c('.x')) { const kind = mb.dataset.menu, key = mb.dataset.key;
+    if (S.menu && S.menu.kind === kind && S.menu.key === key) return closeMenu();
+    return openMenu(kind, key, mb); }
+  if (!inPop && !c('.bulk')) { if (S.menu) { S.menu = null; render(); } }
+
+  // ---- tabs / paging
+  const tab = c('[data-tab]'); if (tab) { S.tab = tab.dataset.tab; S.page = 1; S.selected.clear(); return render(); }
+  const pg = c('[data-page]'); if (pg && !pg.disabled) { S.page = +pg.dataset.page; return render(); }
+
+  // ---- sort
+  const srt = c('[data-sort]'); if (srt) { const k = srt.dataset.sort; S.sort = S.sort.key === k ? { key: k, dir: S.sort.dir === 'asc' ? 'desc' : 'asc' } : { key: k, dir: COL[k].type === 'text' || COL[k].type === 'enum' ? 'asc' : 'desc' }; S.activeView = null; return render(); }
+  const ss = c('[data-setsort]'); if (ss) { const [k, d] = ss.dataset.setsort.split(':'); S.sort = { key: k, dir: d }; S.activeView = null; return render(); }
+
+  // ---- filters
+  const fall = c('[data-fall]'); if (fall) { clearFilter(fall.dataset.fall); return render(); }
+  const fnone = c('[data-fnone]'); if (fnone) { setFilter(fnone.dataset.fnone, { values: [] }); return render(); }
+  const fd = c('[data-fdate]'); if (fd) { const [k, p] = fd.dataset.fdate.split(':'); p === 'all' ? clearFilter(k) : setFilter(k, { preset: p }); return render(); }
+  const uf = c('[data-unfilter]'); if (uf) { e.stopPropagation(); clearFilter(uf.dataset.unfilter); if (S.menu && S.menu.kind === 'col' && S.menu.key === uf.dataset.unfilter && c('.chip')) S.menu = null; return render(); }
+  if (c('[data-alerts]')) { S.alertsOnly = !S.alertsOnly; S.page = 1; S.activeView = null; return render(); }
+  if (c('[data-clearfilters]')) { S.filters = {}; S.alertsOnly = false; S.page = 1; S.activeView = null; return render(); }
+  if (c('[data-resetall]')) { S.filters = {}; S.alertsOnly = false; S.q = ''; S.sort = { key: 'id', dir: 'desc' }; S.page = 1; S.activeView = null; return render(); }
+  if (c('[data-clearq]')) { S.q = ''; S.page = 1; render(); $('#q').focus(); return; }
+
+  // ---- columns
+  const hc = c('[data-hidecol]'); if (hc) { const k = hc.dataset.hidecol; if (!S.profile.hidden.includes(k)) S.profile.hidden.push(k); saveProfile(); S.menu = null; toast(`Столбец «${COL[k].label}» скрыт. Вернуть: кнопка «Колонки»`); return render(); }
+  const pc = c('[data-pincol]'); if (pc) { e.stopPropagation(); const k = pc.dataset.pincol, p = S.profile.pinned; p.includes(k) ? p.splice(p.indexOf(k), 1) : p.push(k); saveProfile(); if (S.menu && S.menu.kind === 'col') S.menu = null; return render(); }
+  if (c('[data-colsreset]')) { const d = DEFAULT_PROFILE(); Object.assign(S.profile, { order: d.order, hidden: d.hidden, pinned: d.pinned, widths: {} }); saveProfile(); return render(); }
+  if (c('[data-density]')) { S.profile.density = S.profile.density === 'compact' ? 'normal' : 'compact'; saveProfile(); return render(); }
+
+  // ---- export
+  const ex = c('[data-export]'); if (ex) { doExport(ex.dataset.export); S.menu = null; return render(); }
+
+  // ---- views
+  const av = c('[data-applyview]'); if (av && !c('.del')) { applyView(av.dataset.applyview); S.menu = null; return render(); }
+  const dv = c('[data-delview]'); if (dv) { e.stopPropagation(); S.views = S.views.filter(v => v.id !== dv.dataset.delview); if (S.activeView === dv.dataset.delview) S.activeView = null; store.set('views', S.views); return render(); }
+  if (c('[data-saveview]')) return saveView();
+
+  // ---- selection / bulk
+  if (c('[data-selall-filtered]')) { _result.forEach(r => S.selected.add(r.id)); return render(); }
+  if (c('[data-unselect]')) { S.selected.clear(); return render(); }
+  const bk = c('[data-bulk]'); if (bk) { const a = bk.dataset.bulk;
+    if (a === 'export') { doExport('xlsx'); return; }
+    if (a === 'status') return openMenu('bulkstatus', null, bk);
+    if (a === 'template') return openMenu('bulktemplate', null, bk);
+    if (a === 'archive') { const n = S.selected.size; ROWS.forEach(r => { if (S.selected.has(r.id)) r.archived = S.tab !== 'archive'; }); S.selected.clear(); toast(`${n} проектов ${S.tab === 'archive' ? 'возвращено из архива' : 'перенесено в архив'}`); return render(); } }
+  const bs = c('[data-bulkset]'); if (bs) { const [f, v] = bs.dataset.bulkset.split(':'); const n = S.selected.size; ROWS.forEach(r => { if (S.selected.has(r.id)) r[f] = v; }); S.menu = null; toast(`${f === 'status' ? 'Статус' : 'Шаблон'} изменён у ${n} проектов`); return render(); }
+});
+
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.id === 'selall') { pageRows().forEach(r => t.checked ? S.selected.add(r.id) : S.selected.delete(r.id)); return render(); }
+  if (t.dataset.sel) { t.checked ? S.selected.add(+t.dataset.sel) : S.selected.delete(+t.dataset.sel); return render(); }
+  if (t.id === 'pagesize') { S.profile.pageSize = +t.value; S.page = 1; saveProfile(); return render(); }
+  if (t.dataset.fval) { const k = t.dataset.fval, vals = enumValues(k), cur = S.filters[k] && Array.isArray(S.filters[k].values) ? [...S.filters[k].values] : [...vals];
+    t.checked ? (cur.includes(t.value) || cur.push(t.value)) : cur.splice(cur.indexOf(t.value), 1);
+    cur.length === vals.length ? clearFilter(k) : setFilter(k, { values: vals.filter(v => cur.includes(v)) }); return render(); }
+  if (t.dataset.ffrom || t.dataset.fto) { const k = t.dataset.ffrom || t.dataset.fto; const f = Object.assign({}, S.filters[k] || {}); f.preset = 'custom'; if (t.dataset.ffrom) f.from = t.value || ''; else f.to = t.value || ''; (!f.from && !f.to) ? clearFilter(k) : setFilter(k, f); return render(); }
+  if (t.dataset.fmin || t.dataset.fmax || t.dataset.fempty) { const k = t.dataset.fmin || t.dataset.fmax || t.dataset.fempty; const f = Object.assign({ min: null, max: null, empty: 'any' }, S.filters[k] || {});
+    if (t.dataset.fmin) f.min = t.value === '' ? null : +t.value; if (t.dataset.fmax) f.max = t.value === '' ? null : +t.value; if (t.dataset.fempty) f.empty = t.value;
+    (f.min == null && f.max == null && f.empty === 'any') ? clearFilter(k) : setFilter(k, f); return render(); }
+  if (t.dataset.colvis) { const k = t.dataset.colvis, h = S.profile.hidden; t.checked ? h.splice(h.indexOf(k), 1) : (h.includes(k) || h.push(k)); saveProfile(); return render(); }
+  if (t.dataset.excols != null) { S.exportAll = t.dataset.excols === '1'; }
+});
+
+let _qT;
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (t.id === 'q') { clearTimeout(_qT); _qT = setTimeout(() => { S.q = t.value; S.page = 1; S.activeView = null; const pos = t.selectionStart; render(); const q = $('#q'); q.focus(); q.setSelectionRange(pos, pos); }, 180); }
+  if (t.dataset.fsearch != null) { S.fsearch = t.value; S.menu.focusSearch = true; renderMenu(); }
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { if (S.menu) return closeMenu(); if (document.activeElement && document.activeElement.id === 'q' && S.q) { S.q = ''; render(); $('#q').focus(); } return; }
+  if (e.key === '/' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) { e.preventDefault(); $('#q').focus(); }
+  if (e.key === 'Enter' && e.target.id === 'vname') saveView();
+});
+function saveView() {
+  const inp = $('#vname'); const name = (inp && inp.value.trim()) || `Вид ${S.views.length + 1}`;
+  const v = { id: String(Date.now()), name, tab: S.tab, q: S.q, sort: S.sort, filters: JSON.parse(JSON.stringify(S.filters)), alertsOnly: S.alertsOnly, hidden: [...S.profile.hidden], order: [...S.profile.order], pinned: [...S.profile.pinned] };
+  S.views.push(v); S.activeView = v.id; store.set('views', S.views); S.menu = null; toast(`Вид «${esc(name)}» сохранён`); render();
+}
+function applyView(id) {
+  if (!id) { S.activeView = null; S.filters = {}; S.q = ''; S.alertsOnly = false; S.sort = { key: 'id', dir: 'desc' }; S.page = 1; return; }
+  const v = S.views.find(x => x.id === id); if (!v) return;
+  Object.assign(S, { tab: v.tab, q: v.q, sort: v.sort, filters: JSON.parse(JSON.stringify(v.filters)), alertsOnly: v.alertsOnly, page: 1, activeView: id });
+  Object.assign(S.profile, { hidden: [...v.hidden], order: [...v.order], pinned: [...v.pinned] }); saveProfile();
+}
+
+/* ---------- column resize ---------- */
+let _rz = null;
+document.addEventListener('mousedown', e => {
+  const h = e.target.closest('[data-rz]'); if (!h) return;
+  e.preventDefault(); const k = h.dataset.rz;
+  _rz = { k, x: e.clientX, w: colWidth(k), h }; h.classList.add('on'); document.body.style.cursor = 'col-resize'; document.body.style.userSelect = 'none';
+});
+document.addEventListener('mousemove', e => {
+  if (!_rz) return; const w = Math.max(56, _rz.w + e.clientX - _rz.x); S.profile.widths[_rz.k] = w;
+  const cols = visibleCols(), idx = cols.indexOf(_rz.k) + 1, tbl = $('#tablewrap table');
+  tbl.querySelectorAll('col')[idx].style.width = w + 'px'; tbl.querySelector(`th[data-col="${_rz.k}"]`).style.width = w + 'px';
+  tbl.style.width = (40 + cols.reduce((a, c) => a + colWidth(c), 0)) + 'px';
+});
+document.addEventListener('mouseup', () => { if (!_rz) return; _rz.h.classList.remove('on'); _rz = null; document.body.style.cursor = ''; document.body.style.userSelect = ''; saveProfile(); render(); });
+document.addEventListener('dblclick', e => { const h = e.target.closest('[data-rz]'); if (h) { delete S.profile.widths[h.dataset.rz]; saveProfile(); render(); } });
+
+/* ---------- column drag reorder ---------- */
+let _drag = null;
+document.addEventListener('dragstart', e => { const li = e.target.closest('[data-drag]'); if (!li) return; _drag = li.dataset.drag; li.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; });
+document.addEventListener('dragover', e => { const li = e.target.closest('[data-drag]'); if (!li || !_drag) return; e.preventDefault(); document.querySelectorAll('.cols li.over').forEach(x => x.classList.remove('over')); li.classList.add('over'); });
+document.addEventListener('dragend', () => { document.querySelectorAll('.cols li.over,.cols li.dragging').forEach(x => x.classList.remove('over', 'dragging')); _drag = null; });
+document.addEventListener('drop', e => {
+  const li = e.target.closest('[data-drag]'); if (!li || !_drag || li.dataset.drag === _drag) return; e.preventDefault();
+  const target = li.dataset.drag, o = S.profile.order, p = S.profile.pinned;
+  // keep pin zones consistent: dragging into pinned zone pins, out of it unpins
+  const tp = p.includes(target); if (tp && !p.includes(_drag)) p.push(_drag); if (!tp && p.includes(_drag)) p.splice(p.indexOf(_drag), 1);
+  const list = tp ? p : o; if (tp) { list.splice(list.indexOf(_drag), 1); list.splice(list.indexOf(target), 0, _drag); }
+  o.splice(o.indexOf(_drag), 1); o.splice(o.indexOf(target), 0, _drag);
+  saveProfile(); _drag = null; render();
+});
+$('#tablewrap').addEventListener('scroll', e => e.target.classList.toggle('scrolled', e.target.scrollLeft > 0));
+window.addEventListener('resize', () => { if (S.menu) renderMenu(); });
+
+readHash();
+render();
+</script>
+
+</body>
+</html>

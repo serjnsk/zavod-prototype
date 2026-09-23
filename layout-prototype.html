@@ -1,0 +1,787 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Zavod CRM Layout</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#f4f5f7; --surface:#ffffff; --border:#e5e7eb; --border-strong:#d6dae1;
+  --text:#1f2937; --text-2:#4b5563; --muted:#8a919e;
+  --accent:#2563eb; --accent-bg:#eaf0fe; --accent-hover:#1d4ed8;
+  --green:#22c55e; --yellow:#f5b301; --red:#ef4444; --orange:#f97316; --star:#f5b301;
+  --hover:#f3f4f6; --row-hover:#f8f9fb;
+  --shadow:0 10px 30px rgba(17,24,39,.14), 0 2px 6px rgba(17,24,39,.06);
+  --header-h:52px; --subbar-h:46px; --sidebar-w:228px;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:13px/1.45 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+svg{display:block;flex:none}
+:focus-visible{outline:2px solid var(--accent);outline-offset:1px;border-radius:6px}
+
+/* ---------- App shell ---------- */
+.app{min-height:100%;display:flex;flex-direction:column}
+.hdr{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:var(--surface);border-bottom:1px solid var(--border)}
+.top{height:var(--header-h);display:flex;align-items:center;gap:8px;padding:0 16px;border-bottom:1px solid var(--border)}
+.subbar{height:var(--subbar-h);display:flex;align-items:center;gap:10px;padding:0 16px;background:#fafbfc}
+.logo{font-weight:700;font-size:17px;letter-spacing:-.02em;color:#111827;text-decoration:none;white-space:nowrap;margin-right:6px;cursor:pointer;border:0;background:none;padding:0}
+.logo .dot{color:var(--orange)} .logo .g{color:#9ca3af;font-weight:500}
+.tools-btn{display:flex;align-items:center;gap:7px;height:32px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;white-space:nowrap;color:var(--text-2)}
+.tools-btn:hover,.tools-btn.open{border-color:var(--accent);color:var(--accent);background:var(--accent-bg)}
+.divider{width:1px;height:22px;background:var(--border);margin:0 4px}
+.topnav{display:flex;align-items:center;gap:2px;flex:1;min-width:0;overflow:hidden;height:var(--header-h)}
+.navitem,.more{height:32px;padding:0 10px;border:0;border-radius:6px;background:transparent;white-space:nowrap;color:var(--text-2);display:inline-flex;align-items:center;gap:4px}
+.navitem:hover,.more:hover{background:var(--hover);color:var(--text)}
+.navitem.active{background:var(--accent-bg);color:var(--accent);font-weight:500}
+.more{color:var(--muted);position:relative}
+.badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--orange);color:#fff;font-size:11px;font-weight:600;margin-left:4px}
+.top-right{display:flex;align-items:center;gap:10px;margin-left:auto;flex:none}
+
+/* popover generic */
+.pop{position:absolute;top:calc(100% + 6px);right:0;min-width:200px;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow);padding:6px;z-index:80}
+.pop .pi{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 10px;border-radius:6px;white-space:nowrap;width:100%;border:0;background:none;text-align:left;color:var(--text)}
+.pop .pi:hover{background:var(--hover)}
+.pop .pi.on{color:var(--accent);font-weight:500;background:var(--accent-bg)}
+.pop .pi.danger{color:var(--red)}
+.pop .ph{padding:6px 10px 4px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.pop hr{border:0;border-top:1px solid var(--border);margin:6px 0}
+
+/* team + user */
+.team{position:relative}
+.team-btn{height:34px;display:flex;align-items:center;gap:8px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text)}
+.team-btn .lbl{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;line-height:1}
+.team-btn .val{font-weight:500;line-height:1.1;white-space:nowrap}
+.team-btn .col{display:flex;flex-direction:column;gap:3px;text-align:left}
+.team-btn:hover{border-color:var(--border-strong);background:#fafafa}
+.user{position:relative}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:600;border:0;font-size:13px}
+.avatar:hover{background:var(--accent-hover)}
+.user .pop .who{padding:8px 10px 6px}
+.user .pop .who b{display:block;font-weight:600}
+.user .pop .who span{color:var(--muted);font-size:12px}
+
+/* ---------- Project selector ---------- */
+.pselect{position:relative;width:960px;max-width:calc(100vw - 32px)}
+.pselect .field{display:flex;align-items:center;gap:8px;height:34px;padding:0 10px;border:1px solid var(--border-strong);border-radius:8px;background:#fff;cursor:text;color:var(--text)}
+.pselect .field .ico{color:var(--muted)}
+.pselect.focus .field{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.14)}
+.pselect input{flex:1;border:0;outline:0;background:transparent;min-width:0;padding:0;height:100%}
+.pselect input::placeholder{color:var(--muted)}
+.pselect .sel{flex:1;display:flex;align-items:center;gap:8px;min-width:0}
+.pselect .sel .n{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:none;max-width:55%}
+.pselect .sel .i{color:var(--muted);font-size:12px;flex:none}
+.pselect .sel .d{color:var(--text-2);font-size:12px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.iconbtn{width:22px;height:22px;border:0;background:transparent;border-radius:5px;color:var(--muted);display:grid;place-items:center;flex:none}
+.iconbtn:hover{background:var(--hover);color:var(--text)}
+.pdrop{position:absolute;top:calc(100% + 6px);left:0;width:720px;max-width:calc(100vw - 32px);background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow);max-height:440px;overflow:auto;z-index:80;padding:6px}
+.pdrop .hd{display:flex;justify-content:space-between;padding:6px 10px 4px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.pitem{display:grid;grid-template-columns:10px 1fr auto;gap:2px 10px;padding:8px 10px;cursor:pointer;align-items:center;border-radius:6px}
+.pitem:hover,.pitem.hl{background:var(--row-hover)}
+.pitem.cur{background:var(--accent-bg)}
+.pitem .name{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pitem .id{color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+.pitem .doms{grid-column:2/4;color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pitem .doms .sep{margin:0 5px;color:#c9cdd4}
+.pdrop .empty{padding:18px 10px;color:var(--muted);text-align:center}
+mark{background:#fff1b8;color:inherit;border-radius:2px;padding:0 1px}
+
+/* ---------- Mega menu ---------- */
+.mega{position:fixed;top:calc(var(--header-h) + env(safe-area-inset-top,0px) + 6px);left:16px;z-index:90;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:18px 20px 12px;display:grid;grid-template-columns:repeat(6,minmax(158px,1fr));gap:18px 26px;max-width:calc(100vw - 32px);max-height:calc(100vh - var(--header-h) - 24px);overflow:auto}
+@media (max-width:1180px){.mega{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:640px){.mega{grid-template-columns:repeat(2,1fr);left:8px;max-width:calc(100vw - 16px)}}
+.mg h4{margin:0 0 6px;font-size:11px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.05em}
+.mi{display:flex;align-items:center;justify-content:flex-start;gap:6px;padding:4px 6px;margin:0 -6px;border-radius:6px;cursor:pointer;color:var(--text);width:max-content;max-width:100%}
+.mi:hover{background:var(--row-hover)}
+.mi.active{color:var(--accent);font-weight:500}
+.mi .t{display:flex;align-items:center;gap:2px;min-width:0}
+.star{width:24px;height:24px;border:0;background:transparent;border-radius:5px;color:#cfd4dc;display:grid;place-items:center;flex:none}
+.mi .star{opacity:0;width:20px;height:20px;margin-left:2px}
+.mi:hover .star,.mi .star.on{opacity:1}
+.mi:hover .star:not(.on){color:#b8bec8}
+.star:hover{background:#fff7db;color:var(--star)}
+.star.on{color:var(--star)}
+.mega .hint{grid-column:1/-1;border-top:1px solid var(--border);padding-top:10px;color:var(--muted);font-size:12px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.mega .hint .star{opacity:1;width:18px;height:18px}
+
+/* ---------- Body: sidebar + main ---------- */
+.body{display:flex;flex:1;min-height:0;align-items:stretch}
+.side{width:var(--sidebar-w);flex:none;background:var(--surface);border-right:1px solid var(--border);position:sticky;top:calc(var(--header-h) + var(--subbar-h) + 2px + env(safe-area-inset-top,0px));height:calc(100vh - var(--header-h) - var(--subbar-h) - 2px - env(safe-area-inset-top,0px));overflow:auto;padding:12px 8px;display:flex;flex-direction:column}
+.side .proj{padding:6px 10px 12px;border-bottom:1px solid var(--border);margin-bottom:6px}
+.side .back{color:var(--muted);font-size:12px;display:inline-flex;gap:4px;align-items:center;border:0;background:none;padding:0}
+.side .back:hover{color:var(--accent)}
+.side .pname{font-weight:600;font-size:13px;margin-top:8px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.side .pmeta{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:11.5px;margin-top:5px}
+.sgroup{margin-top:4px}
+.sgroup-h{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;font-weight:600;font-size:12.5px;color:#111827;cursor:pointer;border-radius:6px;user-select:none;width:100%;border:0;background:none;text-align:left}
+.sgroup-h:hover{background:var(--hover)}
+.sgroup-h svg{transition:transform .15s;color:var(--muted)}
+.sgroup.collapsed .sgroup-h svg{transform:rotate(-90deg)}
+.sgroup.collapsed .sitems{display:none}
+.sitem{display:flex;align-items:center;justify-content:space-between;padding:6px 10px 6px 20px;border-radius:6px;color:var(--text-2);cursor:pointer;font-size:13px;width:100%;border:0;background:none;text-align:left}
+.sgroup.flat .sitem{padding-left:10px;font-weight:500;color:var(--text)}
+.sitem:hover{background:var(--hover);color:var(--text)}
+.sitem.active{background:var(--accent-bg);color:var(--accent);font-weight:500}
+.side .fish{padding:12px 10px 0;color:var(--muted);font-size:11.5px;font-style:italic;border-top:1px dashed var(--border)}
+.sgroup-h .gl{display:flex;align-items:center;gap:8px;min-width:0}
+.sgroup-h .gi,.sitem .gi{color:var(--muted);display:grid;place-items:center;width:16px}
+.sgroup.flat .sitem{display:flex;gap:8px;justify-content:flex-start}
+.sitem.active .gi,.sgroup-h:hover .gi{color:inherit}
+/* collapsed rail */
+.side.collapsed{width:56px;padding:12px 6px;overflow:visible}
+.side.collapsed .sgroup,.side.collapsed .fish{display:none}
+.rail{display:none;flex-direction:column;gap:2px}
+.side.collapsed .rail{display:flex}
+.rail-item{position:relative}
+.rail-btn{width:44px;height:40px;border:0;background:none;border-radius:8px;display:grid;place-items:center;color:var(--text-2);position:relative}
+.rail-btn:hover{background:var(--hover);color:var(--text)}
+.rail-btn.active{background:var(--accent-bg);color:var(--accent)}
+.rail-btn .rb{position:absolute;top:5px;right:5px;width:8px;height:8px;border-radius:50%;background:var(--orange);border:2px solid #fff;box-sizing:content-box}
+.flyout{position:absolute;left:100%;top:0;padding-left:8px;display:none;z-index:60}
+.rail-item:hover .flyout,.rail-item.open .flyout{display:block}
+.flyout .pop{position:static;min-width:210px}
+.flyout .pop .pi{justify-content:space-between}
+.side-toggle{margin-top:auto;display:flex;align-items:center;gap:8px;height:36px;padding:0 10px;border:0;background:none;border-radius:8px;color:var(--muted);font-size:12px;width:100%;text-align:left}
+.side-toggle:hover{background:var(--hover);color:var(--text)}
+.side-toggle svg{transition:transform .15s}
+.side.collapsed .side-toggle{width:44px;justify-content:center;padding:0}
+.side.collapsed .side-toggle span{display:none}
+.side.collapsed .side-toggle svg{transform:rotate(180deg)}
+.main{flex:1;min-width:0;padding:18px 20px 48px}
+
+/* ---------- List page ---------- */
+.page-head{display:flex;align-items:center;gap:14px;margin-bottom:14px;flex-wrap:wrap}
+.page-head h1{font-size:20px;font-weight:600;margin:0;letter-spacing:-.01em}
+.seg{display:inline-flex;background:#eceef2;border-radius:8px;padding:2px}
+.seg button{height:26px;padding:0 10px;border:0;border-radius:6px;background:transparent;color:var(--text-2);font-size:12.5px}
+.seg button.on{background:#fff;color:var(--text);font-weight:500;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.spacer{flex:1}
+.btn{height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--border);background:#fff;display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text)}
+.btn:hover{background:#fafafa;border-color:var(--border-strong)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:500}
+.btn.primary:hover{background:var(--accent-hover)}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.filters .search{flex:1;min-width:220px;height:34px;border:1px solid var(--border);border-radius:8px;padding:0 12px;background:#fff;color:var(--muted);display:flex;align-items:center}
+.filters select,.filters .fbtn{height:34px;border:1px solid var(--border);border-radius:8px;background:#fff;padding:0 10px;font-size:12.5px;color:var(--text-2);display:inline-flex;align-items:center;gap:6px}
+.tmeta{display:flex;justify-content:flex-end;align-items:center;gap:10px;color:var(--muted);font-size:12px;margin-bottom:8px}
+.tmeta select{height:28px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:12px;color:var(--text-2)}
+.card{background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{text-align:left;font-weight:600;color:var(--text-2);padding:10px 12px;border-bottom:1px solid var(--border);white-space:nowrap;font-size:12px;background:#fafbfc}
+th .srt{color:#c0c5cd;margin-left:3px}
+td{padding:10px 12px;border-bottom:1px solid #eef0f3;vertical-align:top}
+tr:last-child td{border-bottom:0}
+tbody tr{cursor:pointer}
+tbody tr:hover td{background:var(--row-hover)}
+.id{color:var(--muted);font-variant-numeric:tabular-nums}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);flex:none}
+.dot.y{background:var(--yellow)} .dot.r{background:var(--red)} .dot.off{background:#c9cdd4}
+.chip{display:inline-block;padding:2px 8px;border-radius:6px;background:#eef2f7;color:#334155;font-size:11.5px;white-space:nowrap}
+.dom{white-space:nowrap;line-height:1.5}
+.dom .st{color:var(--muted);font-size:11px;margin-left:6px}
+.dom .nc{color:var(--muted);font-size:11px;margin-left:4px}
+.link{color:var(--accent);text-decoration:none;cursor:pointer}
+.link:hover{text-decoration:underline}
+.pname-cell{font-weight:500;color:var(--text)}
+.dash{color:#c0c5cd}
+.actions{color:var(--muted);text-align:right}
+.actions:hover{color:var(--accent)}
+
+/* ---------- Project page ---------- */
+.crumbs{color:var(--muted);font-size:12px;margin-bottom:6px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.phead{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.phead h1{font-size:20px;margin:0;font-weight:600;letter-spacing:-.01em;text-wrap:balance}
+.phead .meta{display:flex;gap:8px;align-items:center;margin-top:8px;color:var(--muted);font-size:12px;flex-wrap:wrap}
+.phead .meta .sep{color:#c9cdd4}
+.phead .right{margin-left:auto;display:flex;gap:8px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:14px}
+.kpi{background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+.kpi .l{color:var(--muted);font-size:12px}
+.kpi .v{font-size:22px;font-weight:600;margin-top:2px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.kpi .v small{font-size:12px;color:var(--muted);font-weight:400;margin-left:6px}
+.kpi.warn .v{color:#b45309}
+.grid2{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:12px;align-items:start}
+@media (max-width:1000px){.grid2{grid-template-columns:1fr}}
+.card h3{font-size:13px;font-weight:600;margin:0;padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card h3 .link{font-weight:400;font-size:12px}
+.card .pad{padding:14px}
+.placeholder{min-height:120px;border-radius:8px;background:repeating-linear-gradient(135deg,#f3f4f6 0 8px,#eaecf0 8px 16px);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;text-align:center;padding:12px}
+.stack{display:grid;gap:12px}
+.act{display:flex;gap:10px;padding:10px 14px;border-bottom:1px solid #eef0f3;font-size:12.5px}
+.act:last-child{border-bottom:0}
+.act .t{color:var(--muted);font-size:11.5px;white-space:nowrap;min-width:44px;font-variant-numeric:tabular-nums}
+.tabnote{display:inline-flex;align-items:center;gap:6px;color:#92400e;background:#fff7e6;border:1px solid #fde4b8;border-radius:6px;padding:2px 8px;font-size:11.5px;font-weight:500}
+
+@media (max-width:820px){
+  .team-btn .col{display:none}
+}
+@media (max-width:640px){
+  .top{padding:0 10px;gap:6px}
+  .tools-btn span{display:none}
+  .divider{display:none}
+  .side{position:fixed;left:0;z-index:40;box-shadow:var(--shadow)}
+  .main{padding:14px 16px 40px}
+  .pselect .pdrop{width:calc(100vw - 32px)}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="app" id="app">
+  <div class="hdr">
+  <header class="top">
+    <button class="logo" id="logo" title="На главную">zavod<span class="dot">.</span><span class="g">guru</span></button>
+    <button class="tools-btn" id="toolsBtn" aria-haspopup="true" aria-expanded="false">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="0" y="0" width="4" height="4" rx="1"/><rect x="5" y="0" width="4" height="4" rx="1"/><rect x="10" y="0" width="4" height="4" rx="1"/><rect x="0" y="5" width="4" height="4" rx="1"/><rect x="5" y="5" width="4" height="4" rx="1"/><rect x="10" y="5" width="4" height="4" rx="1"/><rect x="0" y="10" width="4" height="4" rx="1"/><rect x="5" y="10" width="4" height="4" rx="1"/><rect x="10" y="10" width="4" height="4" rx="1"/></svg>
+      <span>Все инструменты</span>
+    </button>
+    <div class="divider"></div>
+    <nav class="topnav" id="topnav" aria-label="Разделы"></nav>
+    <div class="top-right">
+      <div class="team" id="team"></div>
+      <div class="user" id="user"></div>
+    </div>
+  </header>
+  <div class="subbar">
+    <div class="pselect" id="pselect"></div>
+  </div>
+  </div>
+
+  <div class="mega" id="mega" hidden role="menu"></div>
+
+  <div class="body">
+    <aside class="side" id="side" hidden aria-label="Разделы проекта"></aside>
+    <main class="main" id="main"></main>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   DATA
+   ========================================================= */
+const GROUPS = [
+  { name: 'Сайты', items: [
+    { id: 'projects', label: 'Проекты' },
+    { id: 'domains', label: 'Домены' },
+    { id: 'templates', label: 'Шаблоны дизайна' },
+    { id: 'schemes', label: 'Схемы' },
+    { id: 'prompts', label: 'Промпты' },
+    { id: 'translations', label: 'Переводы' },
+  ]},
+  { name: 'Библиотеки', items: [
+    { id: 'casino', label: 'Казино' },
+    { id: 'slots', label: 'Слоты' },
+  ]},
+  { name: 'PBNmaker', items: [
+    { id: 'tasks', label: 'Задачи' },
+    { id: 'acceptors', label: 'Замена акцепторов' },
+  ]},
+  { name: 'Регистраторы', items: [
+    { id: 'accounts', label: 'Аккаунты' },
+    { id: 'zones', label: 'Доменные зоны' },
+    { id: 'buyout', label: 'Выкуп доменов', badge: 28 },
+    { id: 'intercept', label: 'Перехват доменов' },
+  ]},
+  { name: 'Монобренды', items: [
+    { id: 'reflinks', label: 'Реф. ссылки' },
+    { id: 'monobrands', label: 'Монобренды' },
+    { id: 'games', label: 'Игры' },
+  ]},
+  { name: 'Админ', items: [
+    { id: 'cloudflare', label: 'Cloudflare аккаунты' },
+    { id: 'servers', label: 'Сервера' },
+    { id: 'monitoring', label: 'Мониторинг' },
+    { id: 'users', label: 'Пользователи' },
+    { id: 'settings', label: 'Настройки системы' },
+  ]},
+];
+const ALL_ITEMS = GROUPS.flatMap(g => g.items);
+const itemById = id => ALL_ITEMS.find(i => i.id === id);
+const DEFAULT_STARS = ['projects', 'domains', 'schemes', 'casino', 'tasks', 'buyout', 'monitoring'];
+
+/* Пункты сайдбара проекта — заглушка, реальные внесёт продукт-овнер */
+const PROJECT_NAV = [
+  { flat: true, icon: 'overview', items: [{ id: 'overview', label: 'Обзор', icon: 'overview' }] },
+  { name: 'Сайт', icon: 'site', items: [
+    { id: 'p-domains', label: 'Домены' },
+    { id: 'p-design', label: 'Шаблон и дизайн' },
+    { id: 'p-pages', label: 'Страницы' },
+    { id: 'p-content', label: 'Контент' },
+  ]},
+  { name: 'Трафик', icon: 'traffic', items: [
+    { id: 'p-clicks', label: 'Показы и клики' },
+    { id: 'p-positions', label: 'Позиции' },
+    { id: 'p-analytics', label: 'Аналитика' },
+  ]},
+  { name: 'Ссылки', icon: 'links', items: [
+    { id: 'p-inlinks', label: 'Входящие' },
+    { id: 'p-outlinks', label: 'Исходящие' },
+    { id: 'p-reflinks', label: 'Реф. ссылки' },
+  ]},
+  { name: 'Настройки', icon: 'settings', items: [
+    { id: 'p-server', label: 'Сервер' },
+    { id: 'p-cf', label: 'Cloudflare' },
+    { id: 'p-monitoring', label: 'Мониторинг', badge: 1 },
+    { id: 'p-history', label: 'История изменений' },
+  ]},
+];
+const PROJECT_TAB = id => PROJECT_NAV.flatMap(g => g.items).find(i => i.id === id);
+
+/* d: [domain, impressions, clicks] или [domain, null] = не подключен; svc:true = служебная ссылка */
+const PROJECTS = [
+  { id: 489, st: 'y', name: 'Legální online casino', tpl: 'Дженерик', svc: true, d: [], c: '23.09.2026', m: '23.09.2026' },
+  { id: 487, st: 'g', name: 'Nejlepší Euro online casino pro české hráče', tpl: 'Дженерик', d: [['prehledcasin.cz',0,0],['www.brideadvisor.cz',0,0]], c: '23.09.2026', m: '23.09.2026' },
+  { id: 486, st: 'g', name: 'Cazinouri online noi în România', tpl: 'Дженерик', d: [['www.restaurantamuse.ro',0,0],['noicazinourionline-romania.ro',0,0]], c: '22.09.2026', m: '23.09.2026' },
+  { id: 485, st: 'g', name: 'Top cazinouri online Romania', tpl: 'Дженерик', d: [['topcazinourionline-romania.ro',0,0],['sperantavietii.ro',0,0]], c: '22.09.2026', m: '23.09.2026' },
+  { id: 484, st: 'y', name: 'Cazinouri online noi în România', tpl: 'Дженерик', d: [['refmarosmezo.ro',null],['cazinourionlinenoi-românia.ro',null]], c: '22.09.2026', m: '23.09.2026' },
+  { id: 483, st: 'g', name: 'Cazinouri online străine pentru jucătorii din România', tpl: 'Дженерик', d: [['pnt-maniu-mihalache.ro',null],['străinecazinourionline-jucătoriiromânia.ro',null]], c: '22.09.2026', m: '23.09.2026' },
+  { id: 482, st: 'y', name: 'Cazinouri online străine pentru jucătorii români', tpl: 'Дженерик', d: [['cazinouristrăine-jucătoriiromâni.ro',null],['www.caminul-phillip.ro',null]], c: '22.09.2026', m: '23.09.2026' },
+  { id: 476, st: 'y', name: 'Nya online casinon', tpl: 'Дженерик', svc: true, d: [], c: '22.09.2026', m: '22.09.2026' },
+  { id: 475, st: 'g', name: 'Nové české online casino', tpl: 'Дженерик', d: [['onlinecasinavcesku.cz',0,0],['www.golsport.cz',0,0]], c: '22.09.2026', m: '22.09.2026' },
+  { id: 471, st: 'g', name: 'Nejlepší zahraniční casino', tpl: 'Дженерик', d: [['recenzecasin-cz.cz',0,0],['www.reklamni-tetovani.cz',0,0]], c: '22.09.2026', m: '23.09.2026' },
+  { id: 451, st: 'g', name: 'Casino bez ověření bankovního účtu', tpl: 'Дженерик', d: [['casinoindex.cz',0,0],['hrackyhracky.cz',9,0]], c: '22.09.2026', m: '23.09.2026' },
+  { id: 448, st: 'g', name: 'paysafecard online casino', tpl: 'Дженерик', d: [['casinofokus.cz',0,0],['www.orl2025.cz',1,0]], c: '21.09.2026', m: '22.09.2026' },
+  { id: 447, st: 'g', name: 'nové české online casino', tpl: 'Дженерик', d: [['casinometr.cz',0,0],['mapovani-kko.cz',2,0]], c: '21.09.2026', m: '22.09.2026' },
+  { id: 442, st: 'g', name: 'paysafecard online casino', tpl: 'Дженерик', d: [['www.penzionjanota.cz',0,0],['srovnanionlinecasin.cz',1,0]], c: '17.09.2026', m: '22.09.2026' },
+  { id: 441, st: 'g', name: 'zahraniční online kasina', tpl: 'Дженерик', d: [['na-pc.cz',0,0],['prehledonlinecasin.cz',0,0]], c: '17.09.2026', m: '17.09.2026' },
+  { id: 440, st: 'g', name: 'internetové kasína', tpl: 'Дженерик', d: [['www.penzion-salamander.sk',4,0],['internetove-kasina.sk',0,0]], c: '17.09.2026', m: '17.09.2026' },
+  { id: 439, st: 'g', name: 'Nové online kasína na Slovensku', tpl: 'Дженерик', d: [['probiotikapredeti.sk',0,0],['nove-online-kasina-na-slovensku.sk',0,0]], c: '17.09.2026', m: '17.09.2026' },
+  { id: 438, st: 'g', name: 'online kasína na slovensku', tpl: 'Дженерик', d: [['motyliazahrada.sk',5,0],['onlinekasina-na-slovensku.sk',0,0]], c: '17.09.2026', m: '17.09.2026' },
+  { id: 437, st: 'g', name: 'nové české online casino', tpl: 'Дженерик', d: [['www.pracovitaberuska.cz',0,0],['hodnocenionlinecasin.cz',null]], c: '17.09.2026', m: '17.09.2026' },
+];
+const TEAMS = ['Команда Кости', 'Команда Игоря', 'Команда Марии', 'Все команды'];
+
+/* =========================================================
+   STATE
+   ========================================================= */
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('zavod.' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('zavod.' + k, JSON.stringify(v)); } catch (e) {} },
+};
+const state = {
+  view: 'list',          // 'list' | 'project'
+  entity: 'projects',    // активный раздел верхнего меню
+  project: null,         // выбранный проект (объект)
+  tab: 'overview',       // активная вкладка сайдбара
+  listTab: 'active',
+  starred: new Set(store.get('starred', DEFAULT_STARS)),
+  collapsed: new Set(),
+  sideCollapsed: store.get('sideCollapsed', false),
+  railOpen: null,
+  team: TEAMS[0],
+  megaOpen: false,
+  teamOpen: false,
+  userOpen: false,
+  moreOpen: false,
+  psOpen: false,
+  psQuery: '',
+  psHl: 0,
+};
+function go(patch) { Object.assign(state, patch); render(); }
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function hl(text, q) {
+  if (!q) return esc(text);
+  const i = text.toLowerCase().indexOf(q.toLowerCase());
+  if (i < 0) return esc(text);
+  return esc(text.slice(0, i)) + '<mark>' + esc(text.slice(i, i + q.length)) + '</mark>' + esc(text.slice(i + q.length));
+}
+const GICON = {
+  overview: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><rect x="2" y="2" width="5" height="5" rx="1.2"/><rect x="9" y="2" width="5" height="5" rx="1.2"/><rect x="2" y="9" width="5" height="5" rx="1.2"/><rect x="9" y="9" width="5" height="5" rx="1.2"/></svg>',
+  site: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M2 8h12M8 2c2 2 2 10 0 12M8 2c-2 2-2 10 0 12"/></svg>',
+  traffic: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12l4-4 3 3 5-6"/><path d="M10.5 5H14v3.5"/></svg>',
+  links: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6.5 9.5l3-3"/><path d="M7 4.5l1.2-1.2a2.5 2.5 0 013.5 3.5L10.5 8"/><path d="M9 11.5l-1.2 1.2a2.5 2.5 0 01-3.5-3.5L5.5 8"/></svg>',
+  settings: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.8l1.2 1.6 2-.4.6 1.9 1.9.6-.4 2 1.6 1.2-1.6 1.2.4 2-1.9.6-.6 1.9-2-.4L8 14.2l-1.2-1.6-2 .4-.6-1.9-1.9-.6.4-2L1.1 8l1.6-1.2-.4-2 1.9-.6.6-1.9 2 .4z"/></svg>',
+};
+const ICON = {
+  chev: '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5l3 3 3-3"/></svg>',
+  search: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14" stroke-linecap="round"/></svg>',
+  x: '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7"/></svg>',
+  star: (on) => `<svg width="14" height="14" viewBox="0 0 24 24" fill="${on ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 2.5l2.9 6.2 6.7.8-5 4.6 1.3 6.7L12 17.5l-5.9 3.3 1.3-6.7-5-4.6 6.7-.8z"/></svg>`,
+  edit: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M11.5 2.5l2 2L5 13H3v-2z"/></svg>',
+  collapse: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2.5" width="12" height="11" rx="1.5"/><path d="M6 2.5v11M11.5 6.5L10 8l1.5 1.5"/></svg>',
+  back: '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5L4 6l3.5 3.5"/></svg>',
+  alert: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2l6.5 11.5H1.5z"/><path d="M8 6.5v3M8 12v.01"/></svg>',
+  cols: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="2.5" width="12" height="11" rx="1.5"/><path d="M6.5 2.5v11M10 2.5v11"/></svg>',
+  dl: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5v8M5 7.5l3 3 3-3M3 13.5h10"/></svg>',
+};
+function projectDomainsText(p) {
+  if (p.svc) return 'служебная ссылка';
+  return p.d.map(d => d[0]).join(' · ');
+}
+
+/* =========================================================
+   RENDER: top nav
+   ========================================================= */
+function renderTopnav() {
+  const nav = $('#topnav');
+  const starred = ALL_ITEMS.filter(i => state.starred.has(i.id));
+  nav.innerHTML = starred.map(i =>
+    `<button class="navitem${state.entity === i.id ? ' active' : ''}" data-nav="${i.id}">${esc(i.label)}${i.badge ? `<span class="badge">${i.badge}</span>` : ''}</button>`
+  ).join('') + `<button class="more" id="moreBtn" hidden>Ещё ${ICON.chev}</button>`;
+  layoutNav();
+}
+/* Пункты, не влезающие по ширине, уезжают в «Ещё» */
+function layoutNav() {
+  const nav = $('#topnav');
+  const items = [...nav.querySelectorAll('.navitem')];
+  const more = $('#moreBtn');
+  if (!more) return;
+  items.forEach(b => b.hidden = false);
+  more.hidden = true;
+  const avail = nav.clientWidth;
+  const widths = items.map(b => b.offsetWidth + 2);
+  let total = widths.reduce((a, b) => a + b, 0);
+  if (total <= avail) { more.dataset.items = ''; return; }
+  more.hidden = false;
+  let used = more.offsetWidth + 2;
+  const overflow = [];
+  items.forEach((b, i) => {
+    used += widths[i];
+    if (used > avail) { b.hidden = true; overflow.push(b.dataset.nav); }
+  });
+  more.dataset.items = overflow.join(',');
+  if (state.moreOpen) renderMorePop();
+}
+function renderMorePop() {
+  const more = $('#moreBtn');
+  let pop = more.querySelector('.pop');
+  if (!state.moreOpen) { if (pop) pop.remove(); return; }
+  const ids = (more.dataset.items || '').split(',').filter(Boolean);
+  if (!pop) { pop = document.createElement('div'); pop.className = 'pop'; pop.style.left = '0'; pop.style.right = 'auto'; pop.style.top = '36px'; more.appendChild(pop); }
+  pop.innerHTML = ids.map(id => { const i = itemById(id); return `<button class="pi${state.entity === id ? ' on' : ''}" data-nav="${id}">${esc(i.label)}${i.badge ? `<span class="badge">${i.badge}</span>` : ''}</button>`; }).join('');
+}
+
+/* =========================================================
+   RENDER: mega menu
+   ========================================================= */
+function renderMega() {
+  const m = $('#mega');
+  $('#toolsBtn').classList.toggle('open', state.megaOpen);
+  $('#toolsBtn').setAttribute('aria-expanded', state.megaOpen);
+  m.hidden = !state.megaOpen;
+  if (!state.megaOpen) return;
+  m.innerHTML = GROUPS.map(g => `
+    <div class="mg">
+      <h4>${esc(g.name)}</h4>
+      ${g.items.map(i => `
+        <div class="mi${state.entity === i.id ? ' active' : ''}" data-nav="${i.id}" role="menuitem">
+          <span class="t">${esc(i.label)}${i.badge ? `<span class="badge">${i.badge}</span>` : ''}</span>
+          <button class="star${state.starred.has(i.id) ? ' on' : ''}" data-star="${i.id}" title="${state.starred.has(i.id) ? 'Убрать из верхнего меню' : 'Показывать в верхнем меню'}" aria-pressed="${state.starred.has(i.id)}">${ICON.star(state.starred.has(i.id))}</button>
+        </div>`).join('')}
+    </div>`).join('') +
+    `<div class="hint"><span class="star on">${ICON.star(true)}</span> отмеченные разделы показываются в верхнем меню. Порядок — как в этом списке.</div>`;
+}
+
+/* =========================================================
+   RENDER: project selector
+   ========================================================= */
+function psResults() {
+  const q = state.psQuery.trim().toLowerCase();
+  if (!q) return PROJECTS;
+  return PROJECTS.filter(p => p.name.toLowerCase().includes(q) || String(p.id).includes(q) || p.d.some(d => d[0].toLowerCase().includes(q)));
+}
+function renderSelector() {
+  const el = $('#pselect');
+  el.classList.toggle('focus', state.psOpen);
+  const p = state.project;
+  let field;
+  if (state.psOpen || !p) {
+    field = `<div class="field"><span class="ico">${ICON.search}</span>
+      <input id="psInput" type="text" placeholder="${p ? 'Найти другой проект…' : 'Выбрать проект: название или домен…'}" value="${esc(state.psQuery)}" autocomplete="off" aria-label="Поиск проекта" aria-expanded="${state.psOpen}" role="combobox">
+      ${state.psQuery ? `<button class="iconbtn" data-ps="clearq" title="Очистить">${ICON.x}</button>` : ''}</div>`;
+  } else {
+    field = `<div class="field" data-ps="open" title="${esc(p.name)} · ${esc(projectDomainsText(p))}">
+      <span class="dot ${p.st}"></span>
+      <div class="sel"><span class="n">${esc(p.name)}</span><span class="d">${esc(projectDomainsText(p))}</span><span class="i">#${p.id}</span></div>
+      <button class="iconbtn" data-ps="clear" title="Сбросить проект">${ICON.x}</button>
+      <span class="ico">${ICON.chev}</span></div>`;
+  }
+  let drop = '';
+  if (state.psOpen) {
+    const res = psResults();
+    const q = state.psQuery.trim();
+    drop = `<div class="pdrop" role="listbox">
+      <div class="hd"><span>${q ? 'Найдено ' + res.length : 'Последние проекты'}</span><span>поиск по названию и доменам</span></div>` +
+      (res.length ? res.slice(0, 30).map((p, i) => {
+        const doms = p.svc ? '<span class="link">служебная ссылка</span>' :
+          p.d.map(d => hl(d[0], q) + (d[1] == null ? ' <span class="nc">(не подключен)</span>' : '')).join('<span class="sep">·</span>');
+        return `<div class="pitem${i === state.psHl ? ' hl' : ''}${state.project && state.project.id === p.id ? ' cur' : ''}" data-pick="${p.id}" role="option">
+          <span class="dot ${p.st}"></span><span class="name">${hl(p.name, q)}</span><span class="id">#${hl(String(p.id), q)}</span>
+          <div class="doms">${doms}</div></div>`;
+      }).join('') : `<div class="empty">Ничего не найдено по «${esc(q)}»</div>`) + `</div>`;
+  }
+  el.innerHTML = field + drop;
+  if (state.psOpen) {
+    const inp = $('#psInput');
+    if (inp && document.activeElement !== inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+  }
+}
+
+/* =========================================================
+   RENDER: team + user
+   ========================================================= */
+function renderTeam() {
+  $('#team').innerHTML = `
+    <button class="team-btn" id="teamBtn" aria-haspopup="true" aria-expanded="${state.teamOpen}">
+      <span class="col"><span class="lbl">Показывать данные</span><span class="val">${esc(state.team)}</span></span>${ICON.chev}
+    </button>` + (state.teamOpen ? `<div class="pop"><div class="ph">Показывать данные</div>${TEAMS.map(t => `<button class="pi${t === state.team ? ' on' : ''}" data-team="${esc(t)}">${esc(t)}</button>`).join('')}</div>` : '');
+}
+function renderUser() {
+  $('#user').innerHTML = `
+    <button class="avatar" id="userBtn" title="Сергей · Лидер команды" aria-haspopup="true" aria-expanded="${state.userOpen}">С</button>` +
+    (state.userOpen ? `<div class="pop"><div class="who"><b>Сергей</b><span>Лидер команды</span></div><hr><button class="pi">Профиль</button><button class="pi">Настройки</button><hr><button class="pi danger">Выйти</button></div>` : '');
+}
+
+/* =========================================================
+   RENDER: sidebar (только внутри проекта)
+   ========================================================= */
+function renderSide() {
+  const s = $('#side');
+  const show = state.view === 'project' && state.project;
+  s.hidden = !show;
+  if (!show) return;
+  s.classList.toggle('collapsed', state.sideCollapsed);
+  const groupActive = g => g.items.some(i => i.id === state.tab);
+  const expanded = PROJECT_NAV.map((g, gi) => g.flat
+    ? `<div class="sgroup flat">${g.items.map(i => `<button class="sitem${state.tab === i.id ? ' active' : ''}" data-tab="${i.id}"><span class="gi">${GICON[i.icon] || ''}</span>${esc(i.label)}</button>`).join('')}</div>`
+    : `<div class="sgroup${state.collapsed.has(gi) ? ' collapsed' : ''}">
+        <button class="sgroup-h" data-group="${gi}" aria-expanded="${!state.collapsed.has(gi)}"><span class="gl"><span class="gi">${GICON[g.icon] || ''}</span>${esc(g.name)}</span>${ICON.chev}</button>
+        <div class="sitems">${g.items.map(i => `<button class="sitem${state.tab === i.id ? ' active' : ''}" data-tab="${i.id}">${esc(i.label)}${i.badge ? `<span class="badge">${i.badge}</span>` : ''}</button>`).join('')}</div>
+      </div>`).join('');
+  const rail = `<div class="rail">${PROJECT_NAV.map((g, gi) => {
+    const hasBadge = g.items.some(i => i.badge);
+    if (g.flat) { const i = g.items[0]; return `<div class="rail-item"><button class="rail-btn${state.tab === i.id ? ' active' : ''}" data-tab="${i.id}" title="${esc(i.label)}">${GICON[i.icon] || ''}</button></div>`; }
+    return `<div class="rail-item${state.railOpen === gi ? ' open' : ''}">
+      <button class="rail-btn${groupActive(g) ? ' active' : ''}" data-rail="${gi}" title="${esc(g.name)}" aria-haspopup="true">${GICON[g.icon] || ''}${hasBadge ? '<span class="rb"></span>' : ''}</button>
+      <div class="flyout"><div class="pop"><div class="ph">${esc(g.name)}</div>${g.items.map(i => `<button class="pi${state.tab === i.id ? ' on' : ''}" data-tab="${i.id}">${esc(i.label)}${i.badge ? `<span class="badge">${i.badge}</span>` : ''}</button>`).join('')}</div></div>
+    </div>`;
+  }).join('')}</div>`;
+  s.innerHTML = expanded + rail +
+    `<button class="side-toggle" data-sidetoggle title="${state.sideCollapsed ? 'Развернуть меню' : 'Свернуть меню'}">${ICON.collapse}<span>Свернуть меню</span></button>` +
+    `<div class="fish">Пункты меню — заглушка. Реальные разделы проекта будут добавлены позже, вложенность 2 уровня.</div>`;
+}
+
+/* =========================================================
+   RENDER: main
+   ========================================================= */
+function domainCell(p) {
+  if (p.svc) return `<span class="link">служебная ссылка</span>`;
+  return p.d.map(d => d[1] == null
+    ? `<div class="dom">${esc(d[0])}<span class="nc">(Не подключен)</span></div>`
+    : `<div class="dom">${esc(d[0])}<span class="st">${d[1]} показ. · ${d[2]} кл.</span></div>`).join('');
+}
+function renderProjectsList() {
+  return `
+    <div class="page-head">
+      <h1>Проекты</h1>
+      <div class="seg"><button class="${state.listTab === 'active' ? 'on' : ''}" data-ltab="active">Активные</button><button class="${state.listTab === 'archive' ? 'on' : ''}" data-ltab="archive">Архив</button></div>
+      <div class="spacer"></div>
+      <button class="btn primary">+ Добавить проект</button>
+    </div>
+    <div class="filters">
+      <div class="search">Поиск по названию или домену…</div>
+      <select><option>Все статусы</option></select>
+      <select><option>Все бренды</option></select>
+      <select><option>Все проекты</option></select>
+      <select><option>Все шаблоны</option></select>
+      <select><option>Все сервера</option></select>
+      <span class="fbtn">${ICON.alert} С алертами</span>
+    </div>
+    <div class="tmeta"><span>всего: 89</span><span class="iconbtn" title="Колонки">${ICON.cols}</span><select><option>По 50</option></select><span class="iconbtn" title="Экспорт">${ICON.dl}</span><span>↺ сброс</span></div>
+    <div class="card"><div class="tablewrap"><table>
+      <thead><tr><th>ID<span class="srt">⇅</span></th><th>Статус<span class="srt">⇅</span></th><th>Бренд<span class="srt">⇅</span></th><th style="width:34%;min-width:220px">Название<span class="srt">⇅</span></th><th>Шаблон</th><th>Домены</th><th>Создан<span class="srt">⇅</span></th><th>Изменён<span class="srt">⇅</span></th><th class="actions">Действия</th></tr></thead>
+      <tbody>${PROJECTS.map(p => `
+        <tr data-open="${p.id}" title="Открыть проект">
+          <td class="id">${p.id}</td><td><span class="dot ${p.st}"></span></td><td><span class="dash">—</span></td>
+          <td class="pname-cell">${esc(p.name)}</td><td><span class="chip">${esc(p.tpl)}</span></td>
+          <td>${domainCell(p)}</td><td class="id">${p.c}</td><td class="id">${p.m}</td><td class="actions">${ICON.edit}</td>
+        </tr>`).join('')}</tbody>
+    </table></div></div>`;
+}
+function renderGenericList(item) {
+  const rows = item.id === 'domains'
+    ? PROJECTS.flatMap(p => p.d.map(d => ({ id: d[0], st: d[1] == null ? 'off' : 'g', name: d[0], extra: p.name, m: p.m })))
+    : Array.from({ length: 12 }, (_, i) => ({ id: 1200 - i * 7, st: i % 5 === 3 ? 'y' : 'g', name: `${item.label.replace(/ы$|и$/, '')} — элемент ${i + 1}`, extra: '—', m: `${String(20 - (i % 9)).padStart(2, '0')}.09.2026` }));
+  return `
+    <div class="page-head">
+      <h1>${esc(item.label)}</h1>
+      ${item.badge ? `<span class="badge" style="height:22px;min-width:22px;font-size:12px">${item.badge}</span>` : ''}
+      <div class="spacer"></div>
+      <button class="btn primary">+ Добавить</button>
+    </div>
+    <div class="filters"><div class="search">Поиск…</div><select><option>Все статусы</option></select><select><option>Все проекты</option></select></div>
+    <div class="tmeta"><span>всего: ${rows.length}</span><select><option>По 50</option></select></div>
+    <div class="card"><div class="tablewrap"><table>
+      <thead><tr><th>ID</th><th>Статус</th><th style="width:45%">Название</th><th>Проект</th><th>Изменён</th><th class="actions">Действия</th></tr></thead>
+      <tbody>${rows.map(r => `<tr><td class="id">${esc(r.id)}</td><td><span class="dot ${r.st}"></span></td><td class="pname-cell">${esc(r.name)}</td><td class="id">${esc(r.extra)}</td><td class="id">${r.m}</td><td class="actions">${ICON.edit}</td></tr>`).join('')}</tbody>
+    </table></div></div>
+    <p style="color:var(--muted);font-size:12px;margin-top:10px">Страница раздела «${esc(item.label)}» — заглушка. Список на всю ширину, левый сайдбар скрыт, пока не выбран проект.</p>`;
+}
+function renderProject() {
+  const p = state.project;
+  const tab = PROJECT_TAB(state.tab) || PROJECT_TAB('overview');
+  const connected = p.d.filter(d => d[1] != null).length;
+  const impressions = p.d.reduce((a, d) => a + (d[1] || 0), 0);
+  const head = `
+    <div class="phead">
+      <div>
+        <h1>${esc(p.name)}</h1>
+        <div class="meta"><span class="dot ${p.st}"></span><span>${p.st === 'g' ? 'Активен' : 'Требует внимания'}</span><span class="sep">·</span><span>ID ${p.id}</span><span class="sep">·</span><span class="chip">${esc(p.tpl)}</span><span class="sep">·</span><span>создан ${p.c}</span><span class="sep">·</span><span>изменён ${p.m}</span></div>
+      </div>
+      <div class="right"><button class="btn">${ICON.edit} Редактировать</button><button class="btn">⋯</button></div>
+    </div>`;
+  if (tab.id === 'overview') {
+    return head + `
+      <div class="kpis">
+        <div class="kpi"><div class="l">Домены</div><div class="v">${p.svc ? 0 : p.d.length}<small>${p.svc ? 'служебная ссылка' : connected + ' подключено'}</small></div></div>
+        <div class="kpi"><div class="l">Показы, 7 дн.</div><div class="v">${impressions}</div></div>
+        <div class="kpi"><div class="l">Клики, 7 дн.</div><div class="v">0</div></div>
+        <div class="kpi ${p.st === 'y' ? 'warn' : ''}"><div class="l">Алерты</div><div class="v">${p.st === 'y' ? 1 : 0}</div></div>
+      </div>
+      <div class="grid2">
+        <div class="stack">
+          <div class="card"><h3>Домены проекта <span class="link" data-tab="p-domains">Все домены →</span></h3>
+            ${p.svc ? `<div class="pad" style="color:var(--muted)">У проекта пока нет доменов — используется <span class="link">служебная ссылка</span>.</div>` : `<div class="tablewrap"><table>
+              <thead><tr><th>Домен</th><th>Статус</th><th>Показы</th><th>Клики</th><th>Cloudflare</th></tr></thead>
+              <tbody>${p.d.map(d => `<tr><td class="pname-cell">${esc(d[0])}</td><td>${d[1] == null ? '<span class="dot off"></span> <span class="id">Не подключен</span>' : '<span class="dot"></span> Подключен'}</td><td class="id">${d[1] ?? '—'}</td><td class="id">${d[2] ?? '—'}</td><td class="id">${d[1] == null ? '—' : 'cf-acc-03'}</td></tr>`).join('')}</tbody>
+            </table></div>`}
+          </div>
+          <div class="card"><h3>Трафик за 30 дней</h3><div class="pad"><div class="placeholder">График показов и кликов — заглушка</div></div></div>
+        </div>
+        <div class="stack">
+          <div class="card"><h3>Последние изменения</h3>
+            <div class="act"><span class="t">${p.m}</span><span>Обновлён шаблон «${esc(p.tpl)}»</span></div>
+            <div class="act"><span class="t">${p.c}</span><span>Проект создан</span></div>
+            ${p.d.length ? `<div class="act"><span class="t">${p.c}</span><span>Привязан домен ${esc(p.d[0][0])}</span></div>` : ''}
+          </div>
+          <div class="card"><h3>Сервер и инфраструктура</h3><div class="pad"><div class="placeholder" style="min-height:80px">Сервер, Cloudflare, мониторинг — заглушка</div></div></div>
+        </div>
+      </div>`;
+  }
+  return head + `
+    <div class="card"><h3>${esc(tab.label)} <span class="tabnote">заглушка вкладки</span></h3>
+      <div class="pad stack">
+        <div class="placeholder" style="min-height:60px">Фильтры вкладки «${esc(tab.label)}»</div>
+        <div class="placeholder" style="min-height:260px">Содержимое вкладки «${esc(tab.label)}» проекта #${p.id}.<br>Здесь вайбкодер разместит реальную таблицу / форму.</div>
+      </div>
+    </div>`;
+}
+function renderMain() {
+  const m = $('#main');
+  if (state.view === 'project' && state.project) m.innerHTML = renderProject();
+  else if (state.entity === 'projects') m.innerHTML = renderProjectsList();
+  else m.innerHTML = renderGenericList(itemById(state.entity));
+  window.scrollTo({ top: 0 });
+}
+
+function render() {
+  renderTopnav(); renderMega(); renderSelector(); renderTeam(); renderUser(); renderSide(); renderMain(); renderMorePop();
+}
+
+/* =========================================================
+   EVENTS
+   ========================================================= */
+function closeAll(except) {
+  const patch = {};
+  if (except !== 'mega') patch.megaOpen = false;
+  if (except !== 'team') patch.teamOpen = false;
+  if (except !== 'user') patch.userOpen = false;
+  if (except !== 'more') patch.moreOpen = false;
+  if (except !== 'ps') { patch.psOpen = false; patch.psQuery = ''; }
+  return patch;
+}
+function openProject(p, tab) { go({ ...closeAll(), view: 'project', entity: 'projects', project: p, tab: tab || 'overview', psHl: 0 }); }
+
+document.addEventListener('click', e => {
+  const t = e.target;
+  const c = sel => t.closest(sel);
+
+  if (c('#logo')) return go({ ...closeAll(), view: 'list', entity: 'projects' });
+  if (c('#toolsBtn')) return go({ ...closeAll('mega'), megaOpen: !state.megaOpen });
+  if (c('#teamBtn')) return go({ ...closeAll('team'), teamOpen: !state.teamOpen });
+  if (c('#userBtn')) return go({ ...closeAll('user'), userOpen: !state.userOpen });
+  if (c('#moreBtn') && !c('[data-nav]')) return go({ ...closeAll('more'), moreOpen: !state.moreOpen });
+
+  const star = c('[data-star]');
+  if (star) {
+    e.stopPropagation();
+    const id = star.dataset.star;
+    state.starred.has(id) ? state.starred.delete(id) : state.starred.add(id);
+    store.set('starred', [...state.starred]);
+    return render();
+  }
+  const team = c('[data-team]');
+  if (team) return go({ ...closeAll(), team: team.dataset.team });
+
+  const nav = c('[data-nav]');
+  if (nav) return go({ ...closeAll(), view: 'list', entity: nav.dataset.nav });
+
+  const tab = c('[data-tab]');
+  if (tab) return go({ ...closeAll(), tab: tab.dataset.tab, railOpen: null });
+
+  if (c('[data-sidetoggle]')) { state.sideCollapsed = !state.sideCollapsed; state.railOpen = null; store.set('sideCollapsed', state.sideCollapsed); return renderSide(); }
+  const rail = c('[data-rail]');
+  if (rail) { const gi = +rail.dataset.rail; state.railOpen = state.railOpen === gi ? null : gi; return renderSide(); }
+
+  const grp = c('[data-group]');
+  if (grp) { const gi = +grp.dataset.group; state.collapsed.has(gi) ? state.collapsed.delete(gi) : state.collapsed.add(gi); return renderSide(); }
+
+  const ltab = c('[data-ltab]');
+  if (ltab) return go({ listTab: ltab.dataset.ltab });
+
+  const row = c('[data-open]');
+  if (row) return openProject(PROJECTS.find(p => p.id === +row.dataset.open));
+
+  const pick = c('[data-pick]');
+  if (pick) return openProject(PROJECTS.find(p => p.id === +pick.dataset.pick));
+
+  const ps = c('[data-ps]');
+  if (ps) {
+    e.stopPropagation();
+    if (ps.dataset.ps === 'open') return go({ ...closeAll('ps'), psOpen: true, psQuery: '', psHl: 0 });
+    if (ps.dataset.ps === 'clearq') return go({ psQuery: '', psHl: 0 });
+    if (ps.dataset.ps === 'clear') return go({ ...closeAll(), project: null, view: 'list', entity: state.entity });
+  }
+  if (c('#pselect .field')) return go({ ...closeAll('ps'), psOpen: true, psHl: 0 });
+  if (c('#pselect')) return;
+
+  /* клик вне поповеров закрывает их */
+  if (!c('.pop') && !c('.mega')) {
+    const anyOpen = state.megaOpen || state.teamOpen || state.userOpen || state.moreOpen || state.psOpen;
+    if (anyOpen) go(closeAll());
+  }
+});
+
+document.addEventListener('input', e => {
+  if (e.target.id === 'psInput') { state.psQuery = e.target.value; state.psHl = 0; renderSelector(); }
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { if (state.megaOpen || state.teamOpen || state.userOpen || state.moreOpen || state.psOpen) go(closeAll()); return; }
+  if (e.target.id === 'psInput') {
+    const res = psResults();
+    if (e.key === 'ArrowDown') { e.preventDefault(); state.psHl = Math.min(res.length - 1, state.psHl + 1); renderSelector(); scrollHl(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); state.psHl = Math.max(0, state.psHl - 1); renderSelector(); scrollHl(); }
+    else if (e.key === 'Enter') { e.preventDefault(); if (res[state.psHl]) openProject(res[state.psHl]); }
+  }
+});
+function scrollHl() { const el = document.querySelector('.pitem.hl'); if (el) el.scrollIntoView({ block: 'nearest' }); }
+new ResizeObserver(() => layoutNav()).observe($('#topnav'));
+
+render();
+</script>
+
+</body>
+</html>

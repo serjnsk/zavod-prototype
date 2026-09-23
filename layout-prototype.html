@@ -229,7 +229,7 @@ mark{background:#fff1b8;color:inherit;border-radius:2px;padding:0 1px}
 .dt table{border-collapse:separate;border-spacing:0;font-size:12.5px;table-layout:fixed}
 .dt th,.dt td{padding:9px 12px;border-bottom:1px solid #eef0f3;vertical-align:top;text-align:left;overflow:hidden;text-overflow:ellipsis;background:#fff}
 .dt thead th{position:sticky;top:0;z-index:3;background:#fafbfc;border-bottom:1px solid var(--border);font-weight:600;color:var(--text-2);font-size:12px;white-space:nowrap;padding:0;height:38px;user-select:none}
-.dt th .thc{display:flex;align-items:center;gap:4px;height:38px;padding:0 8px 0 12px;position:relative}
+.dt th .thc{display:flex;align-items:center;gap:6px;height:38px;padding:0 10px 0 6px;position:relative}
 .dt th .thl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;cursor:pointer;display:flex;align-items:center;gap:4px}
 .dt th.nosort .thl{cursor:default}
 .dt th .thl:hover{color:var(--text)}
@@ -727,8 +727,9 @@ function makeTable(cfg) {
       const c = COL[k], sorted = S.sort.key === k && c.sortable !== false, pin = pinned.includes(k);
       const cls = [c.num ? 'num' : '', c.sortable === false ? 'nosort' : '', sorted ? 'sorted' : '', isActive(k) ? 'filtered' : '', pin ? 'pinned' : '', k === lastPinned ? 'pinned-last' : '', S.menu && S.menu.kind === 'col' && S.menu.key === k ? 'menu-open' : ''].filter(Boolean).join(' ');
       return `<th class="${cls}" data-col="${k}" style="width:${colWidth(k)}px${pin ? `;left:${offs[k]}px` : ''}"><div class="thc">
+        ${c.fixed ? '' : `<button class="mbtn" data-tmenu="col" data-key="${k}" title="${filterable(c) ? 'Фильтр и сортировка' : 'Меню столбца'}">${filterable(c) ? I.filter : I.chev}</button>`}
         <span class="thl" ${c.sortable === false ? '' : `data-sort="${k}" title="Сортировать"`}><span>${esc(c.label)}</span><span class="sarr">${sorted ? (S.sort.dir === 'asc' ? I.up : I.down) : ''}</span>${!sorted && c.sortable !== false ? `<span class="sarr ghost">${I.updown}</span>` : ''}</span>
-        ${c.fixed ? '' : `<button class="mbtn" data-tmenu="col" data-key="${k}" title="${filterable(c) ? 'Фильтр и сортировка' : 'Меню столбца'}">${filterable(c) ? I.filter : I.chev}</button><div class="rz" data-rz="${k}"></div>`}</div></th>`;
+        ${c.fixed ? '' : `<div class="rz" data-rz="${k}"></div>`}</div></th>`;
     };
     const td = (r, k) => { const c = COL[k], pin = pinned.includes(k); return `<td class="${[c.num ? 'num' : '', pin ? 'pinned' : '', k === lastPinned ? 'pinned-last' : ''].filter(Boolean).join(' ')}"${pin ? ` style="left:${offs[k]}px"` : ''}>${c.render(r, q)}</td>`; };
     const body = rows.length ? rows.map(r => `<tr class="${S.selected.has(r.id) ? 'sel' : ''}"><td class="chk pinned" style="left:0"><input type="checkbox" data-sel="${esc(r.id)}" ${S.selected.has(r.id) ? 'checked' : ''} aria-label="Выбрать строку"></td>${cols.map(k => td(r, k)).join('')}</tr>`).join('')

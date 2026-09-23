@@ -235,10 +235,12 @@ mark{background:#fff1b8;color:inherit;border-radius:2px;padding:0 1px}
 .dt th .thl:hover{color:var(--text)}
 .dt th .sarr{color:var(--accent);display:none}
 .dt th.sorted .sarr{display:block}
-.dt th .mbtn{width:22px;height:22px;border:0;background:none;border-radius:5px;color:var(--muted);display:grid;place-items:center;opacity:0;flex:none}
-.dt th:hover .mbtn,.dt th.filtered .mbtn,.dt th.menu-open .mbtn{opacity:1}
-.dt th.filtered .mbtn{color:var(--accent);background:var(--accent-bg)}
-.dt th .mbtn:hover{background:var(--hover);color:var(--text)}
+.dt th .mbtn{width:22px;height:22px;border:1px solid transparent;background:none;border-radius:5px;color:#b3b9c4;display:grid;place-items:center;flex:none}
+.dt th:hover .mbtn{color:var(--text-2);border-color:var(--border);background:#fff}
+.dt th.menu-open .mbtn,.dt th .mbtn:hover{color:var(--accent);border-color:#c7d7fe;background:var(--accent-bg)}
+.dt th.filtered .mbtn{color:var(--accent);background:var(--accent-bg);border-color:#c7d7fe}
+.dt th .thl .sarr.ghost{display:none;color:#b3b9c4}
+.dt th:not(.sorted):not(.nosort):hover .thl .sarr.ghost{display:block}
 .dt th .rz{position:absolute;right:-3px;top:0;width:7px;height:100%;cursor:col-resize;z-index:2}
 .dt th .rz:hover,.dt th .rz.on{background:linear-gradient(to right,transparent 2px,var(--accent) 2px,var(--accent) 4px,transparent 4px)}
 .dt th.pinned,.dt td.pinned{position:sticky;z-index:2}
@@ -252,9 +254,6 @@ mark{background:#fff1b8;color:inherit;border-radius:2px;padding:0 1px}
 .dt th.num .thl{justify-content:flex-end}
 .dt td.chk,.dt th.chk{width:40px;padding:0;text-align:center;vertical-align:middle}
 .dt td.chk input,.dt th.chk input{width:15px;height:15px;margin:0;accent-color:var(--accent);cursor:pointer;vertical-align:middle}
-.dt .compact th,.dt .compact td{padding-top:5px;padding-bottom:5px}
-.dt .compact thead th{height:32px} .dt .compact th .thc{height:32px}
-.dt .compact .dom{line-height:1.35}
 .dom{white-space:nowrap;line-height:1.5;overflow:hidden;text-overflow:ellipsis}
 .dom .s{color:var(--muted);font-size:11px;margin-left:6px}
 .pname{font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
@@ -313,6 +312,11 @@ a.pname:hover,.pname.link:hover{text-decoration:underline;color:var(--accent)}
 .cols .pinb{width:22px;height:22px;border:0;background:none;border-radius:5px;color:#c0c5cd;display:grid;place-items:center}
 .cols .pinb.on,.cols .pinb:hover{color:var(--accent);background:var(--accent-bg)}
 .cols li.fixed{color:var(--muted);cursor:default}
+.btn.qf .del{width:16px;height:16px;border-radius:50%;display:none;place-items:center;color:var(--muted);margin:0 -4px 0 2px}
+.btn.qf:hover .del{display:grid}
+.btn.qf .del:hover{background:#fee2e2;color:var(--red)}
+.chips .save{display:inline-flex;align-items:center;gap:5px;color:var(--accent);font-size:12px;border:0;background:none;padding:0 4px}
+.chips .save:hover{text-decoration:underline}
 .vname{display:flex;gap:6px;padding:4px}
 .vname input{flex:1;height:30px;border:1px solid var(--border);border-radius:6px;padding:0 8px;outline:0;min-width:0}
 .vname input:focus{border-color:var(--accent)}
@@ -419,6 +423,7 @@ const I = {
   up: '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10V2M2.5 5.5L6 2l3.5 3.5"/></svg>',
   down: '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v8M2.5 6.5L6 10l3.5-3.5"/></svg>',
   filter: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M2 3h12l-4.5 5.5V13l-3-1.5V8.5z"/></svg>',
+  updown: '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V1.5M2 3.5l2-2 2 2M8 4v6.5M6 8.5l2 2 2-2"/></svg>',
   cols: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="2.5" width="12" height="11" rx="1.5"/><path d="M6.5 2.5v11M10 2.5v11"/></svg>',
   dl: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5v8M5 7.5l3 3 3-3M3 13.5h10"/></svg>',
   dense: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M2 4h12M2 7h12M2 10h12M2 13h12"/></svg>',
@@ -552,10 +557,10 @@ let ACTIVE = null; // текущая смонтированная таблица
 function makeTable(cfg) {
   const COLUMNS = cfg.columns, COL = Object.fromEntries(COLUMNS.map(c => [c.key, c]));
   const SK = 'table.' + cfg.key + '.';
-  const DEFAULT_PROFILE = () => ({ order: COLUMNS.map(c => c.key), hidden: [...(cfg.hidden || [])], pinned: [...(cfg.defaultPinned || [])], widths: {}, pageSize: 50, density: 'normal' });
+  const DEFAULT_PROFILE = () => ({ order: COLUMNS.map(c => c.key), hidden: [...(cfg.hidden || [])], pinned: [...(cfg.defaultPinned || [])], widths: {}, pageSize: 50 });
   const S = {
     tab: cfg.tabs ? cfg.tabs[0].id : null, sort: Object.assign({}, cfg.defaultSort), filters: {}, q: '', page: 1, quick: new Set(),
-    profile: Object.assign(DEFAULT_PROFILE(), store.get(SK + 'profile', {})), views: store.get(SK + 'views', []), activeView: null,
+    profile: Object.assign(DEFAULT_PROFILE(), store.get(SK + 'profile', {})), qfs: store.get(SK + 'qf', []),
     selected: new Set(), menu: null, fsearch: '', exportAll: false,
   };
   let root = null, result = [];
@@ -653,14 +658,19 @@ function makeTable(cfg) {
   const pageRows = () => { const ps = S.profile.pageSize; return ps ? result.slice((S.page - 1) * ps, S.page * ps) : result; };
   function visibleCols() { const { order, hidden, pinned } = S.profile; const vis = order.filter(k => !hidden.includes(k)); return [...pinned.filter(k => vis.includes(k)), ...vis.filter(k => !pinned.includes(k))]; }
   const colWidth = k => S.profile.widths[k] || COL[k].width;
+  const filterable = c => c.filterable !== false && ['enum', 'date', 'number'].includes(c.type);
   const activeFilterCount = () => Object.keys(S.filters).filter(isActive).length + S.quick.size;
-  const setFilter = (k, f) => { S.filters[k] = f; S.page = 1; S.activeView = null; };
+  const isActiveF = (k, f) => { const save = S.filters[k]; S.filters[k] = f; const r = isActive(k); if (save === undefined) delete S.filters[k]; else S.filters[k] = save; return r; };
+  const filterSig = (filters, quick, q) => JSON.stringify({ f: Object.keys(filters).filter(k => isActiveF(k, filters[k])).sort().map(k => [k, encodeFilter(k, filters[k])]), quick: [...quick].sort(), q: (q || '').trim().toLowerCase() });
+  const curSig = () => filterSig(S.filters, S.quick, S.q);
+  const activeQF = () => S.qfs.find(x => x.sig === curSig());
+  const setFilter = (k, f) => { S.filters[k] = f; S.page = 1; };
   const clearFilter = k => { delete S.filters[k]; S.page = 1; };
 
   /* ---- render ---- */
   function mount(container) {
     root = container; ACTIVE = api;
-    root.innerHTML = `<div class="page-head"><h1>${esc(cfg.title)}</h1><div class="seg" data-part="seg"></div><button class="btn" data-tmenu="views"></button><div class="spacer"></div>${cfg.addLabel ? `<button class="btn primary">${esc(cfg.addLabel)}</button>` : ''}</div>
+    root.innerHTML = `<div class="page-head"><h1>${esc(cfg.title)}</h1><div class="seg" data-part="seg"></div><div class="spacer"></div>${cfg.addLabel ? `<button class="btn primary">${esc(cfg.addLabel)}</button>` : ''}</div>
       <div class="toolbar" data-part="toolbar"></div><div class="chips" data-part="chips"></div>
       <div class="card"><div class="dt" data-part="table"></div><div class="tfoot" data-part="foot"></div></div>`;
     root.addEventListener('click', onClick); root.addEventListener('change', onChange); root.addEventListener('input', onInput); root.addEventListener('keydown', onKeydown);
@@ -671,24 +681,21 @@ function makeTable(cfg) {
   const part = n => root && root.querySelector(`[data-part="${n}"]`);
   function render() {
     if (!root) return; compute();
-    renderSeg(); renderViewsBtn(); renderToolbar(); renderChips(); renderTable(); renderFoot(); renderBulk(); renderMenu(); writeHash();
+    renderSeg(); renderToolbar(); renderChips(); renderTable(); renderFoot(); renderBulk(); renderMenu(); writeHash();
   }
   function renderSeg() {
     const el = part('seg'); if (!cfg.tabs) { el.hidden = true; return; }
     el.innerHTML = cfg.tabs.map(t => `<button class="${S.tab === t.id ? 'on' : ''}" data-ttab="${t.id}">${esc(t.label)} <span class="id">${cfg.rows().filter(t.test).length}</span></button>`).join('');
   }
-  function renderViewsBtn() {
-    const v = S.views.find(x => x.id === S.activeView), b = root.querySelector('[data-tmenu="views"]');
-    b.innerHTML = `${I.views} ${v ? esc(v.name) : 'Виды'} ${I.chev}`; b.classList.toggle('on', !!v);
-  }
   function renderToolbar() {
-    part('toolbar').innerHTML = `
+    const aq = activeQF();
+    part('toolbar').innerHTML = (cfg.search === false ? '' : `
       <label class="tsearch">${I.search}<input class="tq" type="search" placeholder="${esc(cfg.searchPlaceholder || 'Поиск…')}" value="${esc(S.q)}" autocomplete="off">
-        ${S.q ? `<span class="hits">${result.length} совп.</span><button class="iconbtn" data-clearq title="Очистить">${I.xs}</button>` : '<span class="kbd">/</span>'}</label>
-      ${(cfg.quick || []).map(x => `<button class="btn ${S.quick.has(x.id) ? 'on' : ''}" data-quick="${x.id}">${x.icon || ''} ${esc(x.label)}</button>`).join('')}
+        ${S.q ? `<span class="hits">${result.length} совп.</span><button class="iconbtn" data-clearq title="Очистить">${I.xs}</button>` : '<span class="kbd">/</span>'}</label>`) + `
+      ${(cfg.quick || []).map(x => `<button class="btn ${S.quick.has(x.id) ? 'on' : ''}" data-quick="${x.id}" title="Быстрый фильтр">${x.icon || ''} ${esc(x.label)}</button>`).join('')}
+      ${S.qfs.map(x => `<button class="btn qf ${aq && aq.id === x.id ? 'on' : ''}" data-qf="${x.id}" title="Быстрый фильтр: ${esc(x.desc)}">${I.filter} ${esc(x.name)}<span class="del" data-delqf="${x.id}" title="Удалить быстрый фильтр">${I.xs}</span></button>`).join('')}
       <div class="spacer"></div>
       <button class="btn" data-tmenu="cols">${I.cols} Колонки ${S.profile.hidden.length ? `<span class="cnt">${visibleCols().filter(k => !COL[k].fixed).length}</span>` : ''}</button>
-      <button class="btn icon" data-density title="${S.profile.density === 'compact' ? 'Обычные строки' : 'Компактные строки'}">${S.profile.density === 'compact' ? I.loose : I.dense}</button>
       <button class="btn" data-tmenu="export">${I.dl} Экспорт</button>
       <button class="btn icon" data-resetall title="Сбросить фильтры, сортировку и поиск">${I.reset}</button>`;
   }
@@ -701,12 +708,15 @@ function makeTable(cfg) {
   }
   function renderChips() {
     const keys = Object.keys(S.filters).filter(isActive), el = part('chips');
-    if (!keys.length && !S.quick.size) { el.innerHTML = ''; el.hidden = true; return; }
+    if (!keys.length && !S.quick.size && !S.q.trim()) { el.innerHTML = ''; el.hidden = true; return; }
     el.hidden = false;
+    const aq = activeQF();
     el.innerHTML = `<span class="lbl">Фильтры:</span>` +
       (cfg.quick || []).filter(x => S.quick.has(x.id)).map(x => `<span class="fchip" data-quick="${x.id}"><b>${esc(x.chip || x.label)}</b><span class="x" title="Убрать">${I.xs}</span></span>`).join('') +
       keys.map(k => `<span class="fchip" data-tmenu="col" data-key="${k}" title="Изменить фильтр"><b>${esc(COL[k].label)}:</b> ${esc(chipLabel(k))}<span class="x" data-unfilter="${k}" title="Убрать фильтр">${I.xs}</span></span>`).join('') +
-      `<button class="clear" data-clearfilters>Сбросить всё</button>`;
+      (S.q.trim() && cfg.search !== false ? `<span class="fchip"><b>Поиск:</b> ${esc(S.q.trim())}<span class="x" data-clearq title="Убрать">${I.xs}</span></span>` : '') +
+      `<button class="clear" data-clearfilters>Сбросить всё</button>` +
+      (aq ? `<span class="lbl">· быстрый фильтр «${esc(aq.name)}»</span>` : `<button class="save" data-tmenu="saveqf">${I.save} Сохранить как быстрый фильтр</button>`);
   }
   function renderTable() {
     const cols = visibleCols(), rows = pageRows(), q = S.q.trim();
@@ -717,14 +727,14 @@ function makeTable(cfg) {
       const c = COL[k], sorted = S.sort.key === k && c.sortable !== false, pin = pinned.includes(k);
       const cls = [c.num ? 'num' : '', c.sortable === false ? 'nosort' : '', sorted ? 'sorted' : '', isActive(k) ? 'filtered' : '', pin ? 'pinned' : '', k === lastPinned ? 'pinned-last' : '', S.menu && S.menu.kind === 'col' && S.menu.key === k ? 'menu-open' : ''].filter(Boolean).join(' ');
       return `<th class="${cls}" data-col="${k}" style="width:${colWidth(k)}px${pin ? `;left:${offs[k]}px` : ''}"><div class="thc">
-        <span class="thl" ${c.sortable === false ? '' : `data-sort="${k}" title="Сортировать"`}>${isActive(k) ? `<span style="color:var(--accent)">${I.filter}</span>` : ''}<span>${esc(c.label)}</span><span class="sarr">${sorted ? (S.sort.dir === 'asc' ? I.up : I.down) : ''}</span></span>
-        ${c.fixed ? '' : `<button class="mbtn" data-tmenu="col" data-key="${k}" title="Меню столбца">${I.chev}</button><div class="rz" data-rz="${k}"></div>`}</div></th>`;
+        <span class="thl" ${c.sortable === false ? '' : `data-sort="${k}" title="Сортировать"`}><span>${esc(c.label)}</span><span class="sarr">${sorted ? (S.sort.dir === 'asc' ? I.up : I.down) : ''}</span>${!sorted && c.sortable !== false ? `<span class="sarr ghost">${I.updown}</span>` : ''}</span>
+        ${c.fixed ? '' : `<button class="mbtn" data-tmenu="col" data-key="${k}" title="${filterable(c) ? 'Фильтр и сортировка' : 'Меню столбца'}">${filterable(c) ? I.filter : I.chev}</button><div class="rz" data-rz="${k}"></div>`}</div></th>`;
     };
     const td = (r, k) => { const c = COL[k], pin = pinned.includes(k); return `<td class="${[c.num ? 'num' : '', pin ? 'pinned' : '', k === lastPinned ? 'pinned-last' : ''].filter(Boolean).join(' ')}"${pin ? ` style="left:${offs[k]}px"` : ''}>${c.render(r, q)}</td>`; };
     const body = rows.length ? rows.map(r => `<tr class="${S.selected.has(r.id) ? 'sel' : ''}"><td class="chk pinned" style="left:0"><input type="checkbox" data-sel="${esc(r.id)}" ${S.selected.has(r.id) ? 'checked' : ''} aria-label="Выбрать строку"></td>${cols.map(k => td(r, k)).join('')}</tr>`).join('')
       : `<tr><td colspan="${cols.length + 1}"><div class="empty"><b>Ничего не найдено</b>Измените поиск или фильтры${activeFilterCount() || S.q ? ` · <span class="link" data-resetall>сбросить всё</span>` : ''}</div></td></tr>`;
     const wrap = part('table'), sl = wrap.scrollLeft;
-    wrap.innerHTML = `<table class="${S.profile.density === 'compact' ? 'compact' : ''}" style="width:${total}px;min-width:100%">
+    wrap.innerHTML = `<table style="width:${total}px;min-width:100%">
       <colgroup><col style="width:40px">${cols.map(k => `<col style="width:${colWidth(k)}px">`).join('')}</colgroup>
       <thead><tr><th class="chk pinned" style="left:0"><input type="checkbox" data-selall ${allSel ? 'checked' : ''} aria-label="Выбрать все на странице"></th>${cols.map(th).join('')}</tr></thead><tbody>${body}</tbody></table>`;
     const sa = wrap.querySelector('[data-selall]'); if (sa) sa.indeterminate = !allSel && someSel;
@@ -768,7 +778,7 @@ function makeTable(cfg) {
       if (!anchor) { S.menu = null; el.innerHTML = ''; return; } S.menu.anchor = anchor;
     }
     let html = '';
-    if (kind === 'col') html = colMenu(key); else if (kind === 'cols') html = colsMenu(); else if (kind === 'export') html = exportMenu(); else if (kind === 'views') html = viewsMenu();
+    if (kind === 'col') html = colMenu(key); else if (kind === 'cols') html = colsMenu(); else if (kind === 'export') html = exportMenu(); else if (kind === 'saveqf') html = saveQfMenu();
     else if (kind === 'bulkopts') { const b = cfg.bulk.find(x => x.id === key); html = `<div class="ph">${esc(b.label)}</div>${b.options.map(o => `<button class="pi" data-bulkset="${b.id}:${esc(o.v)}">${o.html || esc(o.l)}</button>`).join('')}`; }
     el.innerHTML = `<div class="tpop" role="menu">${html}</div>`;
     const pop = el.firstElementChild; placeMenu(pop, anchor, kind === 'export' || kind === 'cols');
@@ -816,13 +826,15 @@ function makeTable(cfg) {
       <div class="radios"><label><input type="radio" name="excols-${cfg.key}" data-excols="0" ${S.exportAll ? '' : 'checked'}>Видимые столбцы (${cols})</label><label><input type="radio" name="excols-${cfg.key}" data-excols="1" ${S.exportAll ? 'checked' : ''}>Все столбцы (${all})</label></div><hr>
       <button class="pi" data-export="xlsx">${I.dl} Скачать XLSX</button><button class="pi" data-export="csv">${I.dl} Скачать CSV <span class="k">; разделитель, UTF-8</span></button>`;
   }
-  function viewsMenu() {
-    return `<div class="ph">Сохранённые виды</div>
-      <button class="pi ${!S.activeView ? 'on' : ''}" data-applyview="">${!S.activeView ? I.check : '<span style="width:12px"></span>'} По умолчанию</button>
-      ${S.views.map(v => `<button class="pi ${S.activeView === v.id ? 'on' : ''}" data-applyview="${v.id}">${S.activeView === v.id ? I.check : '<span style="width:12px"></span>'} ${esc(v.name)}<span class="del" data-delview="${v.id}" title="Удалить вид">${I.xs}</span></button>`).join('')}
-      ${S.views.length ? '' : '<div class="note">Пока нет сохранённых видов.</div>'}<hr><div class="ph">Сохранить текущий вид</div>
-      <div class="vname"><input data-vname placeholder="Например: Румыния с алертами" maxlength="40"><button class="btn primary" data-saveview>${I.save}</button></div>
-      <div class="note">Вид запоминает поиск, фильтры, сортировку и набор столбцов.</div>`;
+  function describeFilters() {
+    const parts = (cfg.quick || []).filter(x => S.quick.has(x.id)).map(x => x.chip || x.label).concat(Object.keys(S.filters).filter(isActive).map(k => `${COL[k].label}: ${chipLabel(k)}`));
+    if (S.q.trim()) parts.push(`поиск «${S.q.trim()}»`);
+    return parts.join('; ');
+  }
+  function saveQfMenu() {
+    return `<div class="ph">Новый быстрый фильтр</div><div class="note">${esc(describeFilters())}</div>
+      <div class="vname"><input data-vname placeholder="Название, например: Румыния с алертами" maxlength="40"><button class="btn primary" data-saveqf>${I.save}</button></div>
+      <div class="note">Кнопка появится в панели над таблицей и в один клик применит этот набор фильтров.</div>`;
   }
   function doExport(fmt) {
     const rows = S.selected.size ? result.filter(r => S.selected.has(r.id)) : result;
@@ -836,16 +848,17 @@ function makeTable(cfg) {
     } catch (e) {}
     toast(`Файл <b>${name}.${fmt}</b> сформирован: ${fmtNum(rows.length)} строк, ${cols.length} столбцов`);
   }
-  function saveView() {
-    const inp = $('#tpop [data-vname]'), name = (inp && inp.value.trim()) || `Вид ${S.views.length + 1}`;
-    const v = { id: String(Date.now()), name, tab: S.tab, q: S.q, sort: S.sort, filters: JSON.parse(JSON.stringify(S.filters)), quick: [...S.quick], hidden: [...S.profile.hidden], order: [...S.profile.order], pinned: [...S.profile.pinned] };
-    S.views.push(v); S.activeView = v.id; store.set(SK + 'views', S.views); S.menu = null; toast(`Вид «${esc(name)}» сохранён`); render();
+  function saveQf() {
+    const inp = $('#tpop [data-vname]'), name = (inp && inp.value.trim()) || `Фильтр ${S.qfs.length + 1}`;
+    const qf = { id: String(Date.now()), name, desc: describeFilters(), filters: JSON.parse(JSON.stringify(S.filters)), quick: [...S.quick], q: S.q, sig: curSig() };
+    S.qfs = S.qfs.filter(x => x.sig !== qf.sig); S.qfs.push(qf); store.set(SK + 'qf', S.qfs); S.menu = null; toast(`Быстрый фильтр «${esc(name)}» сохранён`); render();
   }
-  function applyView(id) {
-    if (!id) { Object.assign(S, { activeView: null, filters: {}, q: '', quick: new Set(), sort: Object.assign({}, cfg.defaultSort), page: 1 }); return; }
-    const v = S.views.find(x => x.id === id); if (!v) return;
-    Object.assign(S, { tab: v.tab, q: v.q, sort: v.sort, filters: JSON.parse(JSON.stringify(v.filters)), quick: new Set(v.quick), page: 1, activeView: id });
-    Object.assign(S.profile, { hidden: [...v.hidden], order: [...v.order], pinned: [...v.pinned] }); saveProfile();
+  function applyQf(id) {
+    const qf = S.qfs.find(x => x.id === id); if (!qf) return;
+    const cur = activeQF();
+    if (cur && cur.id === id) { S.filters = {}; S.quick = new Set(); S.q = ''; }
+    else { S.filters = JSON.parse(JSON.stringify(qf.filters)); S.quick = new Set(qf.quick); S.q = cfg.search === false ? '' : qf.q; }
+    S.page = 1;
   }
 
   /* ---- events (root + shared #tpop / #bulk) ---- */
@@ -855,24 +868,23 @@ function makeTable(cfg) {
     if (mb && !c('.x')) { const kind = mb.dataset.tmenu, key = mb.dataset.key; e.stopPropagation(); if (S.menu && S.menu.kind === kind && S.menu.key === key) return closeMenu(); return openMenu(kind, key, mb); }
     const tab = c('[data-ttab]'); if (tab) { S.tab = tab.dataset.ttab; S.page = 1; S.selected.clear(); return render(); }
     const pg = c('[data-page]'); if (pg && !pg.disabled) { S.page = +pg.dataset.page; return render(); }
-    const srt = c('[data-sort]'); if (srt) { const k = srt.dataset.sort; S.sort = S.sort.key === k ? { key: k, dir: S.sort.dir === 'asc' ? 'desc' : 'asc' } : { key: k, dir: ['text', 'enum'].includes(COL[k].type) ? 'asc' : 'desc' }; S.activeView = null; return render(); }
-    const ss = c('[data-setsort]'); if (ss) { const [k, d] = ss.dataset.setsort.split(':'); S.sort = { key: k, dir: d }; S.activeView = null; return render(); }
+    const srt = c('[data-sort]'); if (srt) { const k = srt.dataset.sort; S.sort = S.sort.key === k ? { key: k, dir: S.sort.dir === 'asc' ? 'desc' : 'asc' } : { key: k, dir: ['text', 'enum'].includes(COL[k].type) ? 'asc' : 'desc' }; return render(); }
+    const ss = c('[data-setsort]'); if (ss) { const [k, d] = ss.dataset.setsort.split(':'); S.sort = { key: k, dir: d }; return render(); }
     const fall = c('[data-fall]'); if (fall) { clearFilter(fall.dataset.fall); return render(); }
     const fnone = c('[data-fnone]'); if (fnone) { setFilter(fnone.dataset.fnone, { values: [] }); return render(); }
     const fd = c('[data-fdate]'); if (fd) { const [k, p] = fd.dataset.fdate.split(':'); p === 'all' ? clearFilter(k) : setFilter(k, { preset: p }); return render(); }
     const uf = c('[data-unfilter]'); if (uf) { e.stopPropagation(); clearFilter(uf.dataset.unfilter); if (S.menu && S.menu.kind === 'col' && S.menu.key === uf.dataset.unfilter && c('.fchip')) S.menu = null; return render(); }
-    const qk = c('[data-quick]'); if (qk) { const id = qk.dataset.quick; S.quick.has(id) ? S.quick.delete(id) : S.quick.add(id); S.page = 1; S.activeView = null; return render(); }
-    if (c('[data-clearfilters]')) { S.filters = {}; S.quick.clear(); S.page = 1; S.activeView = null; return render(); }
-    if (c('[data-resetall]')) { S.filters = {}; S.quick.clear(); S.q = ''; S.sort = Object.assign({}, cfg.defaultSort); S.page = 1; S.activeView = null; return render(); }
-    if (c('[data-clearq]')) { S.q = ''; S.page = 1; render(); root.querySelector('.tq').focus(); return; }
+    const qk = c('[data-quick]'); if (qk) { const id = qk.dataset.quick; S.quick.has(id) ? S.quick.delete(id) : S.quick.add(id); S.page = 1; return render(); }
+    if (c('[data-clearfilters]')) { S.filters = {}; S.quick.clear(); S.q = ''; S.page = 1; return render(); }
+    if (c('[data-resetall]')) { S.filters = {}; S.quick.clear(); S.q = ''; S.sort = Object.assign({}, cfg.defaultSort); S.page = 1; return render(); }
+    if (c('[data-clearq]')) { S.q = ''; S.page = 1; render(); const tq = root.querySelector('.tq'); if (tq) tq.focus(); return; }
     const hc = c('[data-hidecol]'); if (hc) { const k = hc.dataset.hidecol; if (!S.profile.hidden.includes(k)) S.profile.hidden.push(k); saveProfile(); S.menu = null; toast(`Столбец «${COL[k].label}» скрыт. Вернуть: кнопка «Колонки»`); return render(); }
     const pc = c('[data-pincol]'); if (pc) { e.stopPropagation(); const k = pc.dataset.pincol, p = S.profile.pinned; p.includes(k) ? p.splice(p.indexOf(k), 1) : p.push(k); saveProfile(); if (S.menu && S.menu.kind === 'col') S.menu = null; return render(); }
     if (c('[data-colsreset]')) { const d = DEFAULT_PROFILE(); Object.assign(S.profile, { order: d.order, hidden: d.hidden, pinned: d.pinned, widths: {} }); saveProfile(); return render(); }
-    if (c('[data-density]')) { S.profile.density = S.profile.density === 'compact' ? 'normal' : 'compact'; saveProfile(); return render(); }
     const ex = c('[data-export]'); if (ex) { doExport(ex.dataset.export); S.menu = null; return render(); }
-    const av = c('[data-applyview]'); if (av && !c('.del')) { applyView(av.dataset.applyview); S.menu = null; return render(); }
-    const dv = c('[data-delview]'); if (dv) { e.stopPropagation(); S.views = S.views.filter(v => v.id !== dv.dataset.delview); if (S.activeView === dv.dataset.delview) S.activeView = null; store.set(SK + 'views', S.views); return render(); }
-    if (c('[data-saveview]')) return saveView();
+    const dq = c('[data-delqf]'); if (dq) { e.stopPropagation(); const qf = S.qfs.find(x => x.id === dq.dataset.delqf); S.qfs = S.qfs.filter(x => x.id !== dq.dataset.delqf); store.set(SK + 'qf', S.qfs); toast(`Быстрый фильтр «${esc(qf.name)}» удалён`); return render(); }
+    const aq = c('[data-qf]'); if (aq) { applyQf(aq.dataset.qf); return render(); }
+    if (c('[data-saveqf]')) return saveQf();
     if (c('[data-selall-filtered]')) { result.forEach(r => S.selected.add(r.id)); return render(); }
     if (c('[data-unselect]')) { S.selected.clear(); return render(); }
     const bk = c('[data-bulk]'); if (bk) { const id = bk.dataset.bulk;
@@ -900,15 +912,15 @@ function makeTable(cfg) {
   let qT;
   function onInput(e) {
     const t = e.target;
-    if (t.classList.contains('tq')) { clearTimeout(qT); qT = setTimeout(() => { S.q = t.value; S.page = 1; S.activeView = null; const pos = t.selectionStart; render(); const q = root.querySelector('.tq'); q.focus(); q.setSelectionRange(pos, pos); }, 180); }
+    if (t.classList.contains('tq')) { clearTimeout(qT); qT = setTimeout(() => { S.q = t.value; S.page = 1; const pos = t.selectionStart; render(); const q = root.querySelector('.tq'); q.focus(); q.setSelectionRange(pos, pos); }, 180); }
     if (t.dataset.fsearch != null) { S.fsearch = t.value; S.menu.focusSearch = true; renderMenu(); }
   }
   function onKeydown(e) {
     if (e.key === 'Escape' && e.target.classList.contains('tq') && S.q) { S.q = ''; render(); root.querySelector('.tq').focus(); }
-    if (e.key === 'Enter' && e.target.dataset.vname != null) saveView();
+    if (e.key === 'Enter' && e.target.dataset.vname != null) saveQf();
   }
   /* resize + drag state exposed for global handlers */
-  const api = { key: cfg.key, mount, unmount, render, onClick, onChange, onInput, onKeydown, closeMenu, hasMenu: () => !!S.menu, focusSearch: () => root && root.querySelector('.tq') && root.querySelector('.tq').focus(),
+  const api = { key: cfg.key, mount, unmount, render, onClick, onChange, onInput, onKeydown, closeMenu, hasMenu: () => !!S.menu, focusSearch: () => { const tq = root && root.querySelector('.tq'); if (tq) tq.focus(); else { const ps = document.querySelector('#pselect .field'); if (ps) ps.click(); } },
     S, colWidth, visibleCols, saveProfile, root: () => root };
   readHash();
   return api;
@@ -952,8 +964,7 @@ window.addEventListener('resize', () => ACTIVE && ACTIVE.hasMenu() && ACTIVE.ren
 const actionsCol = { key: 'actions', label: 'Действия', type: 'none', width: 64, sortable: false, filterable: false, fixed: true, render: () => `<div class="racts"><span class="iconbtn" title="Редактировать">${I.edit}</span><span class="iconbtn" title="Ещё">${I.dots}</span></div>` };
 const TABLES = {};
 TABLES.projects = makeTable({
-  key: 'projects', title: 'Проекты', addLabel: '+ Добавить проект', rows: () => PROJECTS, hay: r => r.hay,
-  searchPlaceholder: 'Поиск по названию, доменам или ID…', defaultSort: { key: 'id', dir: 'desc' }, defaultPinned: ['id'], hidden: ['server', 'alerts'],
+  key: 'projects', title: 'Проекты', addLabel: '+ Добавить проект', rows: () => PROJECTS, hay: r => r.hay, search: false, defaultSort: { key: 'id', dir: 'desc' }, defaultPinned: ['id'], hidden: ['server', 'alerts'],
   tabs: [{ id: 'active', label: 'Активные', test: r => !r.archived }, { id: 'archive', label: 'Архив', test: r => r.archived }],
   quick: [{ id: 'alerts', label: 'С алертами', chip: 'Алерты: есть', icon: I.alert, test: r => r.alerts > 0 }],
   columns: [

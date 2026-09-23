@@ -229,8 +229,11 @@ mark{background:#fff1b8;color:inherit;border-radius:2px;padding:0 1px}
 .dt table{border-collapse:separate;border-spacing:0;font-size:12.5px;table-layout:fixed}
 .dt th,.dt td{padding:9px 12px;border-bottom:1px solid #eef0f3;vertical-align:top;text-align:left;overflow:hidden;text-overflow:ellipsis;background:#fff}
 .dt thead th{position:sticky;top:0;z-index:3;background:#fafbfc;border-bottom:1px solid var(--border);font-weight:600;color:var(--text-2);font-size:12px;white-space:nowrap;padding:0;height:38px;user-select:none}
-.dt th .thc{display:flex;align-items:center;gap:6px;height:38px;padding:0 10px 0 6px;position:relative}
-.dt th .thl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;cursor:pointer;display:flex;align-items:center;gap:4px}
+.dt th .thc{display:flex;align-items:center;gap:5px;height:38px;padding:0 10px 0 6px;position:relative}
+.dt th .thl{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;cursor:pointer;display:flex;align-items:center;gap:4px}
+.dt thead th{border-right:1px solid var(--border)}
+.dt thead th:last-child{border-right:0}
+.dt thead th:hover{background:#f3f4f6}
 .dt th.nosort .thl{cursor:default}
 .dt th .thl:hover{color:var(--text)}
 .dt th .sarr{color:var(--accent);display:none}
@@ -250,8 +253,8 @@ mark{background:#fff1b8;color:inherit;border-radius:2px;padding:0 1px}
 .dt tbody tr:hover td{background:var(--row-hover)}
 .dt tbody tr.sel td{background:var(--sel)}
 .dt tbody tr:last-child td{border-bottom:0}
-.dt td.num,.dt th.num .thc{text-align:right;justify-content:flex-end;font-variant-numeric:tabular-nums}
-.dt th.num .thl{justify-content:flex-end}
+.dt td.num{text-align:right;font-variant-numeric:tabular-nums}
+.dt th.num .thc{justify-content:flex-end}
 .dt td.chk,.dt th.chk{width:40px;padding:0;text-align:center;vertical-align:middle}
 .dt td.chk input,.dt th.chk input{width:15px;height:15px;margin:0;accent-color:var(--accent);cursor:pointer;vertical-align:middle}
 .dom{white-space:nowrap;line-height:1.5;overflow:hidden;text-overflow:ellipsis}

@@ -340,7 +340,7 @@ a.pname:hover,.pname.link:hover{text-decoration:underline;color:var(--accent)}
 .toast .ok{color:var(--green)}
 
 /* =========================================================
-   COST REPORT (#/cost-report)
+   PIVOT REPORTS (#/cost-report, #/projects-report)
    ========================================================= */
 .cr-head{margin-bottom:6px}
 .cr-dates{display:flex;align-items:center;gap:6px;color:var(--muted)}
@@ -398,6 +398,11 @@ tr.open .cr-tg svg{transform:none}
 .cr-dt tfoot td{position:sticky;bottom:0;z-index:2;background:#f6f7f9;border-top:1px solid var(--border);border-bottom:0;font-weight:600;color:#111827}
 .cr-dt tfoot td.pinned{z-index:3}
 .cr-dt tfoot .cr-many{font-weight:400}
+.cr-none{color:var(--muted);font-weight:400}
+.cr-slash{color:#c0c5cd;font-weight:400}
+.cr-kpis .v.cr-top{font-size:17px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cr-kpis .v.cr-top .cr-pn{display:inline;padding:0;color:var(--text)}
+.cr-kpis .v.cr-top .cr-pn:hover{color:var(--accent)}
 
 @media (max-width:820px){.team-btn .col{display:none}.dt{max-height:none}}
 @media (max-width:640px){
@@ -519,11 +524,11 @@ const GROUPS = [
   { name: 'PBNmaker', items: [ { id: 'tasks', label: 'Задачи' }, { id: 'acceptors', label: 'Замена акцепторов' } ]},
   { name: 'Регистраторы', items: [ { id: 'accounts', label: 'Аккаунты' }, { id: 'zones', label: 'Доменные зоны' }, { id: 'buyout', label: 'Выкуп доменов', badge: 28 }, { id: 'intercept', label: 'Перехват доменов' } ]},
   { name: 'Монобренды', items: [ { id: 'reflinks', label: 'Реф. ссылки' }, { id: 'monobrands', label: 'Монобренды' }, { id: 'games', label: 'Игры' } ]},
-  { name: 'Админ', items: [ { id: 'cloudflare', label: 'Cloudflare аккаунты' }, { id: 'servers', label: 'Сервера' }, { id: 'monitoring', label: 'Мониторинг' }, { id: 'cost-report', label: 'Себестоимость API' }, { id: 'users', label: 'Пользователи' }, { id: 'settings', label: 'Настройки системы' } ]},
+  { name: 'Админ', items: [ { id: 'cloudflare', label: 'Cloudflare аккаунты' }, { id: 'servers', label: 'Сервера' }, { id: 'monitoring', label: 'Мониторинг' }, { id: 'cost-report', label: 'Себестоимость API' }, { id: 'projects-report', label: 'Сводка по проектам' }, { id: 'users', label: 'Пользователи' }, { id: 'settings', label: 'Настройки системы' } ]},
 ];
 const ALL_ITEMS = GROUPS.flatMap(g => g.items);
 const itemById = id => ALL_ITEMS.find(i => i.id === id);
-const DEFAULT_STARS = ['projects', 'domains', 'schemes', 'casino', 'tasks', 'buyout', 'monitoring', 'cost-report'];
+const DEFAULT_STARS = ['projects', 'domains', 'schemes', 'casino', 'tasks', 'buyout', 'monitoring', 'cost-report', 'projects-report'];
 const PROJECT_NAV = [
   { flat: true, icon: 'overview', items: [{ id: 'overview', label: 'Обзор', icon: 'overview' }] },
   { name: 'Сайт', icon: 'site', items: [ { id: 'p-domains', label: 'Домены' }, { id: 'p-design', label: 'Шаблон и дизайн' }, { id: 'p-pages', label: 'Страницы' }, { id: 'p-content', label: 'Контент' } ]},
@@ -1131,27 +1136,31 @@ const CR_DIMS = {
 };
 const CR_DIM_KEYS = Object.keys(CR_DIMS);
 const CR_PERIODS = [['today', 'Сегодня'], ['7d', '7 дней'], ['30d', '30 дней'], ['month', 'Этот месяц'], ['prev', 'Прошлый месяц'], ['all', 'Всё время']];
+const crMoneyCell = k => ({ cell: n => `<td class="num${k === 'total' ? ' cr-total' : ''}">${crMoney(n.a[k])}</td>`, csv: n => n.a[k].toFixed(2) });
 const CR_COLS = [
-  { k: 'id', l: 'ID', w: 64, num: true },
-  { k: 'projects', l: 'Проектов', w: 86, num: true },
+  { k: 'id', l: 'ID', w: 64, num: true, leafOnly: true, cell: n => `<td class="num id">${n.id}</td>`, csv: n => n.id, sort: n => n.id ?? -1 },
+  { k: 'projects', l: 'Проектов', w: 86, num: true, groupOnly: true },
   { k: 'fields', l: 'Полей', w: 78, num: true, t: 'Сгенерировано полей' },
   { k: 'images', l: 'Картинок', w: 86, num: true },
-  { k: 'noPrice', l: 'Без цены', w: 84, num: true, t: 'Генерации без записанной цены (текст до 21.09, картинки до 29.09) — в сумму не входят' },
-  { k: 'errors', l: 'Ошибок', w: 76, num: true },
-  { k: 'text', l: 'Текст, $', w: 92, num: true },
-  { k: 'img', l: 'Картинки, $', w: 102, num: true },
-  { k: 'avg', l: 'На проект, $', w: 104, num: true, t: 'Средняя стоимость одного проекта в группе' },
-  { k: 'share', l: 'Доля', w: 136, num: true, t: 'Доля в расходах за период' },
-  { k: 'total', l: 'Итого, $', w: 98, num: true },
-  { k: 'team', l: 'Команда', w: 128 },
-  { k: 'owner', l: 'Ответственный', w: 128 },
-  { k: 'template', l: 'Шаблон', w: 136 },
-  { k: 'provider', l: 'Провайдер', w: 108 },
-  { k: 'model', l: 'Модель', w: 210 },
-  { k: 'first', l: 'Первая генерация', w: 162 },
-  { k: 'last', l: 'Последняя генерация', w: 170 },
+  { k: 'noPrice', l: 'Без цены', w: 84, num: true, t: 'Генерации без записанной цены (текст до 21.09, картинки до 29.09) — в сумму не входят', cell: n => `<td class="num">${n.a.noPrice ? `<span class="cr-np">${fmtNum(n.a.noPrice)}</span>` : '<span class="dash">0</span>'}</td>` },
+  { k: 'errors', l: 'Ошибок', w: 76, num: true, cell: n => `<td class="num">${n.a.errors ? `<span class="cr-err">${fmtNum(n.a.errors)}</span>` : '<span class="dash">0</span>'}</td>` },
+  { k: 'text', l: 'Текст, $', w: 92, num: true, ...crMoneyCell('text') },
+  { k: 'img', l: 'Картинки, $', w: 102, num: true, ...crMoneyCell('img') },
+  { k: 'avg', l: 'На проект, $', w: 104, num: true, t: 'Средняя стоимость одного проекта в группе', groupOnly: true, ...crMoneyCell('avg') },
+  { k: 'share', l: 'Доля', w: 136, num: true, t: 'Доля в расходах за период', sort: n => n.a.total,
+    cell: (n, h) => pvShareCell(h.R.total.total ? n.a.total / h.R.total.total * 100 : 0), csv: (n, h) => h.R.total.total ? (n.a.total / h.R.total.total * 100).toFixed(1) : '0' },
+  { k: 'total', l: 'Итого, $', w: 98, num: true, ...crMoneyCell('total') },
+  { k: 'team', l: 'Команда', w: 128, attr: true },
+  { k: 'owner', l: 'Ответственный', w: 128, attr: true },
+  { k: 'template', l: 'Шаблон', w: 136, attr: true },
+  { k: 'provider', l: 'Провайдер', w: 108, attr: true },
+  { k: 'model', l: 'Модель', w: 210, attr: true,
+    cell: n => { const vals = [...n.a.vals.model]; if (n.kind !== 'leaf' && vals.length > 1) return `<td><span class="cr-many" title="${esc(vals.sort().join('\n'))}">${vals.length} ${crPlural(vals.length, CR_DIMS.model.forms)}</span></td>`;
+      const list = Object.entries(n.a.mcount).sort((x, y) => y[1] - x[1]); return `<td title="${esc(list.map(([m, c]) => m + ' ' + c).join(' · '))}">${n.kind === 'leaf' ? list.map(([m, c]) => `${esc(m)} <span class="id">${fmtNum(c)}</span>`).join('<span class="dash"> · </span>') : esc(vals[0] || '')}</td>`; },
+    csv: n => n.kind === 'leaf' ? Object.entries(n.a.mcount).map(([m, x]) => m + ' ' + x).join(' · ') : [...n.a.vals.model].sort().join(' · ') },
+  { k: 'first', l: 'Первая генерация', w: 162, textSort: true, cell: n => `<td class="id">${crTs(n.a.first)}</td>`, csv: n => n.a.first || '' },
+  { k: 'last', l: 'Последняя генерация', w: 170, textSort: true, cell: n => `<td class="id">${crTs(n.a.last)}</td>`, csv: n => n.a.last || '' },
 ];
-const CR_LEAF_PAGE = 50;
 const crPlural = (n, f) => { const a = n % 100, b = n % 10; return f[a > 10 && a < 20 ? 2 : b === 1 ? 0 : b >= 2 && b <= 4 ? 1 : 2]; };
 const crMoney = n => '$' + n.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const crTs = s => s ? `${s.slice(8, 10)}.${s.slice(5, 7)}.${s.slice(0, 4)}, ${s.slice(11)}` : '';
@@ -1201,109 +1210,117 @@ const CR_DATA = (() => {
   return { facts, projects, minDate: dates[0], maxDate: dates[dates.length - 1] };
 })();
 
-/* ---- компонент ---- */
-const COST = (() => {
-  const SK = 'costreport.';
+/* =========================================================
+   PIVOT KIT — сводная таблица-отчёт: 2 уровня группировки → листья (проекты).
+   Используется отчётами «Себестоимость API» (#/cost-report) и «Сводный отчёт по проектам» (#/projects-report).
+   cfg: { key, route, title, note, dims{k:{label,forms}}, groupKeys[], defaultGroup[g1,g2], cols[], facts(from,to), minDate,
+          agg(a,f), finish(a), kpis(ctx), defaultSort, defaultPeriod, periods[], leafLabel, leafForms, search(f,q), emptyText, filterNote, defaultHidden[] }
+   col: { k, l, w, num, t, attr (значения-измерения: f[k] или массив), cell(n,h), csv(n,h), sort(n), leafOnly, groupOnly }
+   ========================================================= */
+const PV_PERIODS = { today: 'Сегодня', '7d': '7 дней', '30d': '30 дней', month: 'Этот месяц', prev: 'Прошлый месяц', year: 'Этот год', all: 'Всё время' };
+const PV_I = {
+  expand: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6l3-3 3 3M5 10l3 3 3-3"/></svg>',
+  collapse: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l3 3 3-3M5 13l3-3 3 3"/></svg>',
+};
+const pvPct = p => p.toLocaleString('ru-RU', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' %';
+const pvShareCell = p => `<td class="num"><span class="cr-share"><span class="cr-sb"><i style="width:${Math.min(100, p).toFixed(1)}%"></i></span>${pvPct(p)}</span></td>`;
+
+function makePivot(cfg) {
+  const SK = 'pivot.' + cfg.key + '.', DIMS = cfg.dims, GK = cfg.groupKeys;
+  const COLS = cfg.cols, COLMAP = Object.fromEntries(COLS.map(c => [c.k, c])), ATTR = COLS.filter(c => c.attr).map(c => c.k);
   const S = {
-    period: '30d', from: null, to: null, g1: 'team', g2: 'provider', filters: {}, q: '',
-    sort: { key: 'total', dir: 'desc' }, open: new Set(), more: {}, menu: null, fsearch: '', hashRead: false,
+    period: cfg.defaultPeriod || '30d', from: null, to: null, g1: cfg.defaultGroup[0], g2: cfg.defaultGroup[1] || null, filters: {}, q: '',
+    sort: Object.assign({}, cfg.defaultSort), open: new Set(), more: {}, menu: null, fsearch: '', hashRead: false,
   };
-  Object.assign(S, store.get(SK + 'group', {}));
-  const DEFAULT_PROFILE = () => ({ order: CR_COLS.map(c => c.k), hidden: [], pinned: [] });
+  const sg = store.get(SK + 'group', {}); if (GK.includes(sg.g1)) { S.g1 = sg.g1; S.g2 = GK.includes(sg.g2) && sg.g2 !== sg.g1 ? sg.g2 : null; }
+  const DEFAULT_PROFILE = () => ({ order: COLS.map(c => c.k), hidden: [...(cfg.defaultHidden || [])], pinned: [] });
   S.profile = Object.assign(DEFAULT_PROFILE(), store.get(SK + 'profile', {}));
-  for (const c of CR_COLS) if (!S.profile.order.includes(c.k)) S.profile.order.push(c.k);
+  S.profile.order = S.profile.order.filter(k => COLMAP[k]); for (const c of COLS) if (!S.profile.order.includes(c.k)) S.profile.order.push(c.k);
   const saveProfile = () => store.set(SK + 'profile', { order: S.profile.order, hidden: S.profile.hidden });
-  const COLMAP = Object.fromEntries(CR_COLS.map(c => [c.k, c]));
-  let root = null, R = null, qT;
+  const saveGroup = () => store.set(SK + 'group', { g1: S.g1, g2: S.g2 });
+  const PAGE = 50, leafWord = n => crPlural(n, cfg.leafForms || ['проект', 'проекта', 'проектов']);
+  let root = null, R = null, qT, factsCache = null;
 
   function range() {
-    const t = iso(CR_TODAY), y = CR_TODAY.getFullYear(), m = CR_TODAY.getMonth();
+    const T = CR_TODAY, t = iso(T), y = T.getFullYear(), m = T.getMonth();
     switch (S.period) {
       case 'today': return [t, t];
-      case '7d': return [iso(crAddDays(CR_TODAY, -6)), t];
-      case '30d': return [iso(crAddDays(CR_TODAY, -29)), t];
+      case '7d': return [iso(crAddDays(T, -6)), t];
+      case '30d': return [iso(crAddDays(T, -29)), t];
       case 'month': return [iso(new Date(y, m, 1)), t];
       case 'prev': return [iso(new Date(y, m - 1, 1)), iso(new Date(y, m, 0))];
-      case 'all': return [CR_DATA.minDate, t];
-      default: return [S.from || CR_DATA.minDate, S.to || t];
+      case 'year': return [iso(new Date(y, 0, 1)), t];
+      case 'all': return [cfg.minDate, t];
+      default: return [S.from || cfg.minDate, S.to || t];
     }
   }
-  const dimVal = (f, k) => f[k];
+  function periodFacts() { const [a, b] = range(), k = a + '|' + b; if (!factsCache || factsCache.k !== k) factsCache = { k, list: cfg.facts(a, b) }; return factsCache.list; }
   function passFilters(f, except) {
-    for (const k of CR_DIM_KEYS) { if (k === except) continue; const v = S.filters[k]; if (v && v.length && !v.includes(f[k])) return false; }
+    for (const k of GK) { if (k === except) continue; const v = S.filters[k]; if (v && v.length && !v.includes(f[k])) return false; }
     return true;
   }
-  function baseFacts(except) {
-    const [a, b] = range(), q = S.q.trim().toLowerCase();
-    return CR_DATA.facts.filter(f => f.date >= a && f.date <= b && passFilters(f, except) && (!q || f.name.toLowerCase().includes(q) || String(f.pid).includes(q)));
-  }
+  function baseFacts(except) { const q = S.q.trim().toLowerCase(); return periodFacts().filter(f => passFilters(f, except) && (!q || cfg.search(f, q))); }
   function agg(list) {
-    const a = { fields: 0, images: 0, noPrice: 0, errors: 0, text: 0, img: 0, first: null, last: null, pids: new Set(), vals: {}, mcount: {} };
-    for (const k of CR_DIM_KEYS) a.vals[k] = new Set();
-    for (const f of list) {
-      a.fields += f.fields; a.images += f.images; a.noPrice += f.noPrice; a.errors += f.errors; a.text += f.text; a.img += f.img; a.pids.add(f.pid);
-      if (!a.first || f.t0 < a.first) a.first = f.t0; if (!a.last || f.t1 > a.last) a.last = f.t1;
-      for (const k of CR_DIM_KEYS) a.vals[k].add(f[k]);
-      a.mcount[f.model] = (a.mcount[f.model] || 0) + f.fields + f.images;
-    }
-    a.total = a.text + a.img; a.projects = a.pids.size; a.avg = a.projects ? a.total / a.projects : 0;
-    return a;
+    const a = { pids: new Set(), vals: {} }; for (const k of ATTR) a.vals[k] = new Set();
+    for (const f of list) { a.pids.add(f.pid); for (const k of ATTR) { const v = f[k]; if (Array.isArray(v)) v.forEach(x => a.vals[k].add(x)); else a.vals[k].add(v); } cfg.agg(a, f); }
+    a.projects = a.pids.size; cfg.finish(a); return a;
   }
-  function groupBy(list, k) { const m = new Map(); for (const f of list) { const v = k === 'pid' ? f.pid : dimVal(f, k); if (!m.has(v)) m.set(v, []); m.get(v).push(f); } return m; }
+  function groupBy(list, k) { const m = new Map(); for (const f of list) { const v = f[k]; if (!m.has(v)) m.set(v, []); m.get(v).push(f); } return m; }
   function sortVal(n, k) {
     if (k === 'name') return n.label;
-    if (k === 'id') return n.id ?? -1;
-    if (CR_DIMS[k]) return [...n.a.vals[k]].sort().join(' ');
-    if (k === 'share') return n.a.total;
+    const c = COLMAP[k]; if (!c) return '';
+    if (c.sort) return c.sort(n, H);
+    if (c.attr) return [...n.a.vals[k]].sort().join(' ');
     return n.a[k] ?? '';
   }
   function sortNodes(arr) {
-    const { key, dir } = S.sort, m = dir === 'asc' ? 1 : -1;
-    return arr.sort((x, y) => { const a = sortVal(x, key), b = sortVal(y, key); return (typeof a === 'number' && typeof b === 'number' ? a - b : String(a).localeCompare(String(b), 'ru')) * m || y.a.total - x.a.total; });
+    const { key, dir } = S.sort, m = dir === 'asc' ? 1 : -1, tb = cfg.defaultSort.key;
+    return arr.sort((x, y) => { const a = sortVal(x, key), b = sortVal(y, key); return (typeof a === 'number' && typeof b === 'number' ? a - b : String(a).localeCompare(String(b), 'ru')) * m || (sortVal(y, tb) > sortVal(x, tb) ? 1 : -1); });
   }
-  function leaves(list) { return sortNodes([...groupBy(list, 'pid')].map(([pid, fs]) => ({ kind: 'leaf', id: pid, label: fs[0].name, a: agg(fs) }))); }
+  function leaves(list) { return sortNodes([...groupBy(list, 'pid')].map(([pid, fs]) => ({ kind: 'leaf', id: pid, label: cfg.leafLabel(fs[0]), fact: fs[0], a: agg(fs) }))); }
   function compute() {
-    const facts = baseFacts(); const total = agg(facts);
+    const facts = baseFacts(), total = agg(facts);
     const tree = sortNodes([...groupBy(facts, S.g1)].map(([v, fs]) => {
-      const path = String(v), node = { kind: 'g1', path, label: v, a: agg(fs) };
+      const path = String(v), node = { kind: 'g1', path, label: v, a: agg(fs), facts: fs };
       node.children = S.g2 ? sortNodes([...groupBy(fs, S.g2)].map(([v2, fs2]) => ({ kind: 'g2', path: path + '|' + v2, label: v2, a: agg(fs2), facts: fs2 }))) : null;
-      node.facts = fs; return node;
+      return node;
     }));
     R = { facts, total, tree };
   }
-  const hiddenCols = () => new Set([S.g1, S.g2].filter(Boolean));
-  const cols = () => { const g = hiddenCols(); return S.profile.order.map(k => COLMAP[k]).filter(c => c && !g.has(c.k) && !S.profile.hidden.includes(c.k)); };
+  const H = { get R() { return R; }, range, z: v => v ? fmtNum(v) : '<span class="dash">0</span>' };
+  const groupedCols = () => new Set([S.g1, S.g2].filter(Boolean));
+  const cols = () => { const g = groupedCols(); return S.profile.order.map(k => COLMAP[k]).filter(c => c && !g.has(c.k) && !S.profile.hidden.includes(c.k)); };
+  const treeLabel = () => [DIMS[S.g1].label, S.g2 && DIMS[S.g2].label, cfg.leafTitle || 'Проект'].filter(Boolean).join(' › ');
+  const groupLabel = v => v == null || v === '' || v === '—' ? '— не задано' : v;
 
   /* ---- url ---- */
   function writeHash() {
     const p = new URLSearchParams();
-    if (S.period !== '30d') p.set('period', S.period === 'custom' ? `${S.from}..${S.to}` : S.period);
+    if (S.period !== (cfg.defaultPeriod || '30d')) p.set('period', S.period === 'custom' ? `${S.from}..${S.to}` : S.period);
     p.set('group', S.g1 + (S.g2 ? ',' + S.g2 : ''));
-    for (const k of CR_DIM_KEYS) if (S.filters[k] && S.filters[k].length) p.set('f.' + k, S.filters[k].join('|'));
+    for (const k of GK) if (S.filters[k] && S.filters[k].length) p.set('f.' + k, S.filters[k].join('|'));
     if (S.q) p.set('q', S.q);
-    if (S.sort.key !== 'total' || S.sort.dir !== 'desc') p.set('sort', S.sort.key + ':' + S.sort.dir);
-    try { history.replaceState(null, '', '#/cost-report?' + p.toString().replace(/%2C/g, ',').replace(/%7C/g, '|')); } catch (e) {}
+    if (S.sort.key !== cfg.defaultSort.key || S.sort.dir !== cfg.defaultSort.dir) p.set('sort', S.sort.key + ':' + S.sort.dir);
+    try { history.replaceState(null, '', cfg.route + '?' + p.toString().replace(/%2C/g, ',').replace(/%7C/g, '|')); } catch (e) {}
   }
   function readHash() {
-    S.hashRead = true; const h = location.hash; if (!h.startsWith('#/cost-report')) return;
-    const p = new URLSearchParams(h.split('?')[1] || '');
-    const per = p.get('period');
-    if (per) { if (per.includes('..')) { [S.from, S.to] = per.split('..'); S.period = 'custom'; } else if (CR_PERIODS.some(x => x[0] === per)) S.period = per; }
-    const g = (p.get('group') || '').split(',').filter(k => CR_DIMS[k]); if (g[0]) { S.g1 = g[0]; S.g2 = g[1] && g[1] !== g[0] ? g[1] : null; }
-    for (const k of CR_DIM_KEYS) if (p.get('f.' + k)) S.filters[k] = p.get('f.' + k).split('|');
+    S.hashRead = true; const h = location.hash; if (!h.startsWith(cfg.route)) return;
+    const p = new URLSearchParams(h.split('?')[1] || ''), per = p.get('period');
+    if (per) { if (per.includes('..')) { [S.from, S.to] = per.split('..'); S.period = 'custom'; } else if (cfg.periods.includes(per)) S.period = per; }
+    const g = (p.get('group') || '').split(',').filter(k => GK.includes(k)); if (g[0]) { S.g1 = g[0]; S.g2 = g[1] && g[1] !== g[0] ? g[1] : null; }
+    for (const k of GK) if (p.get('f.' + k)) S.filters[k] = p.get('f.' + k).split('|');
     if (p.get('q')) S.q = p.get('q');
-    if (p.get('sort')) { const [k, d] = p.get('sort').split(':'); if (k === 'name' || CR_COLS.some(c => c.k === k)) S.sort = { key: k, dir: d === 'asc' ? 'asc' : 'desc' }; }
+    if (p.get('sort')) { const [k, d] = p.get('sort').split(':'); if (k === 'name' || COLMAP[k]) S.sort = { key: k, dir: d === 'asc' ? 'asc' : 'desc' }; }
   }
-  const saveGroup = () => store.set(SK + 'group', { g1: S.g1, g2: S.g2 });
 
   /* ---- render ---- */
   function mount(container) {
     if (!S.hashRead) readHash();
     root = container; ACTIVE = api;
-    root.innerHTML = `<div class="page-head cr-head"><h1>Отчёт по себестоимости API</h1><div class="seg" data-crpart="periods"></div>
+    root.innerHTML = `<div class="page-head cr-head"><h1>${esc(cfg.title)}</h1><div class="seg" data-crpart="periods"></div>
         <div class="cr-dates"><input type="date" data-crdate="from"><span>—</span><input type="date" data-crdate="to"></div>
         <div class="spacer"></div><span data-crpart="colsbtn" style="display:contents"></span><button class="btn" data-crexport>${I.dl} Скачать CSV</button></div>
-      <p class="cr-note">Расход на генерацию контента — прикидка по токенам (ориентир, не счёт поставщика). Цена текста записывается с 21.09.2026 — более ранние генерации в сумму не входят (видны в столбце «Без цены»), картинок (логотипы, фавиконы, изображения блоков) — с 29.09.2026.</p>
+      <p class="cr-note">${cfg.note}</p>
       <div class="kpis cr-kpis" data-crpart="kpis"></div>
       <div class="card"><div class="cr-bar" data-crpart="bar"></div><div class="dt cr-dt" data-crpart="table"></div></div>`;
     root.addEventListener('click', onClick); root.addEventListener('change', onChange); root.addEventListener('input', onInput); root.addEventListener('keydown', onKeydown);
@@ -1314,95 +1331,65 @@ const COST = (() => {
     if (root) { root.removeEventListener('click', onClick); root.removeEventListener('change', onChange); root.removeEventListener('input', onInput); root.removeEventListener('keydown', onKeydown); }
     if (ACTIVE === api) { ACTIVE = null; S.menu = null; $('#tpop').innerHTML = ''; }
     root = null;
-    if (location.hash.startsWith('#/cost-report')) try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+    if (location.hash.startsWith(cfg.route)) try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
   }
   const part = n => root && root.querySelector(`[data-crpart="${n}"]`);
   function render() {
     if (!root) return; compute();
-    renderHead(); renderKpis(); renderBar(); renderTable(); renderMenu(); writeHash();
+    renderHead(); part('kpis').innerHTML = cfg.kpis({ R, S, range, groupBy }); renderBar(); renderTable(); renderMenu(); writeHash();
   }
   function renderHead() {
-    part('periods').innerHTML = CR_PERIODS.map(([id, l]) => `<button class="${S.period === id ? 'on' : ''}" data-crperiod="${id}">${l}</button>`).join('');
-    const [a, b] = range(); const fi = root.querySelector('[data-crdate="from"]'), ti = root.querySelector('[data-crdate="to"]');
+    part('periods').innerHTML = cfg.periods.map(id => `<button class="${S.period === id ? 'on' : ''}" data-crperiod="${id}">${PV_PERIODS[id]}</button>`).join('');
+    const [a, b] = range(), fi = root.querySelector('[data-crdate="from"]'), ti = root.querySelector('[data-crdate="to"]');
     part('colsbtn').innerHTML = `<button class="btn ${S.profile.hidden.length ? 'on' : ''}" data-crmenu="cols" data-key="">${I.cols} Колонки${S.profile.hidden.length ? ` <span class="cnt">${S.profile.hidden.length}</span>` : ''}</button>`;
     fi.value = a; ti.value = b; fi.max = b; ti.min = a; ti.max = iso(CR_TODAY);
   }
-  function renderKpis() {
-    const t = R.total, all = new Set(CR_DATA.projects.map(p => p.id)).size;
-    const per = [...groupBy(R.facts, 'pid').values()].map(fs => fs.reduce((s, f) => s + f.text + f.img, 0)).sort((x, y) => x - y);
-    const med = per.length ? per[Math.floor(per.length / 2)] : 0, max = per.length ? per[per.length - 1] : 0;
-    const withErr = new Set(R.facts.filter(f => f.errors).map(f => f.pid)).size;
-    part('kpis').innerHTML = `
-      <div class="kpi"><div class="l">Потрачено за период</div><div class="v">${crMoney(t.total)}</div>
-        <div class="s">текст ${crMoney(t.text)} · картинки ${crMoney(t.img)}</div><div class="s">полей ${fmtNum(t.fields)} · картинок ${fmtNum(t.images)} · без цены ${fmtNum(t.noPrice)}</div></div>
-      <div class="kpi"><div class="l">Средняя стоимость 1 проекта</div><div class="v">${crMoney(t.avg)}</div>
-        <div class="s">медиана ${crMoney(med)} · максимум ${crMoney(max)}</div><div class="s">по проектам с генерациями за период</div></div>
-      <div class="kpi"><div class="l">Всего проектов</div><div class="v">${fmtNum(t.projects)}</div>
-        <div class="s">с генерациями за период · всего в системе ${fmtNum(all)}</div><div class="s">${withErr ? `с ошибками генерации: <b class="cr-err">${fmtNum(withErr)}</b>` : 'без ошибок генерации'}</div></div>`;
-  }
   function renderBar() {
-    const fBtn = k => { const v = S.filters[k], on = v && v.length; return `<button class="btn cr-f ${on ? 'on' : ''}" data-crmenu="filter" data-key="${k}">${CR_DIMS[k].label}: <b>${on ? (v.length === 1 ? esc(v[0]) : v.length + ' ' + crPlural(v.length, ['значение', 'значения', 'значений'])) : 'все'}</b>${I.chev}</button>`; };
-    const anyF = CR_DIM_KEYS.some(k => S.filters[k] && S.filters[k].length) || S.q;
+    const fBtn = k => { const v = S.filters[k], on = v && v.length; return `<button class="btn cr-f ${on ? 'on' : ''}" data-crmenu="filter" data-key="${k}">${DIMS[k].label}: <b>${on ? (v.length === 1 ? esc(groupLabel(v[0])) : v.length + ' ' + crPlural(v.length, ['значение', 'значения', 'значений'])) : 'все'}</b>${I.chev}</button>`; };
+    const anyF = GK.some(k => S.filters[k] && S.filters[k].length) || S.q;
     const allOpen = R.tree.length && R.tree.every(n => S.open.has(n.path));
     part('bar').innerHTML = `
       <div class="cr-group"><span class="cr-lbl">Группировка</span>
-        <button class="btn cr-g" data-crmenu="group" data-key="1"><span class="cr-n">1</span>${CR_DIMS[S.g1].label}${I.chev}</button>
+        <button class="btn cr-g" data-crmenu="group" data-key="1"><span class="cr-n">1</span>${DIMS[S.g1].label}${I.chev}</button>
         <span class="cr-sep">›</span>
-        <button class="btn cr-g ${S.g2 ? '' : 'empty'}" data-crmenu="group" data-key="2"><span class="cr-n">2</span>${S.g2 ? CR_DIMS[S.g2].label : 'нет'}${I.chev}</button>
-        <span class="cr-sep">›</span><span class="cr-leaf">Проекты</span></div>
+        <button class="btn cr-g ${S.g2 ? '' : 'empty'}" data-crmenu="group" data-key="2"><span class="cr-n">2</span>${S.g2 ? DIMS[S.g2].label : 'нет'}${I.chev}</button>
+        <span class="cr-sep">›</span><span class="cr-leaf">${esc(cfg.leafsTitle || 'Проекты')}</span></div>
       <span class="cr-vsep"></span>
-      <label class="tsearch cr-search">${I.search}<input class="cr-q" type="search" placeholder="Проект или ID…" value="${esc(S.q)}" autocomplete="off">${S.q ? `<button class="iconbtn" data-crclearq title="Очистить">${I.xs}</button>` : '<span class="kbd">/</span>'}</label>
-      ${CR_DIM_KEYS.map(fBtn).join('')}
+      <label class="tsearch cr-search">${I.search}<input class="cr-q" type="search" placeholder="${esc(cfg.searchPlaceholder || 'Проект или ID…')}" value="${esc(S.q)}" autocomplete="off">${S.q ? `<button class="iconbtn" data-crclearq title="Очистить">${I.xs}</button>` : '<span class="kbd">/</span>'}</label>
+      ${GK.map(fBtn).join('')}
       ${anyF ? `<button class="cr-reset" data-crreset>${I.reset} Сбросить</button>` : ''}
       <div class="spacer"></div>
-      <button class="btn icon" data-crexpand title="${allOpen ? 'Свернуть все группы' : 'Развернуть все группы'}">${allOpen ? CR_I.collapse : CR_I.expand}</button>`;
+      <button class="btn icon" data-crexpand title="${allOpen ? 'Свернуть все группы' : 'Развернуть все группы'}">${allOpen ? PV_I.collapse : PV_I.expand}</button>`;
   }
-  function dimCell(n, k) {
-    const vals = [...n.a.vals[k]];
-    if (k === 'model') {
-      if (n.kind === 'leaf' || vals.length === 1) { const list = Object.entries(n.a.mcount).sort((x, y) => y[1] - x[1]); const txt = list.map(([m, c]) => m + ' ' + c).join(' · ');
-        return `<td title="${esc(txt)}">${n.kind === 'leaf' ? list.map(([m, c]) => `${esc(m)} <span class="id">${fmtNum(c)}</span>`).join('<span class="dash"> · </span>') : esc(vals[0])}</td>`; }
-    }
+  function attrCell(n, k) {
+    const vals = [...n.a.vals[k]].filter(v => v != null && v !== '—'), c = COLMAP[k], forms = (DIMS[k] || c).forms || ['значение', 'значения', 'значений'];
+    if (!vals.length) return '<td><span class="dash">—</span></td>';
     if (vals.length === 1) return `<td title="${esc(vals[0])}">${esc(vals[0])}</td>`;
     if (n.kind === 'leaf') return `<td title="${esc(vals.join(' · '))}">${esc(vals.join(' · '))}</td>`;
-    return `<td><span class="cr-many" title="${esc(vals.sort().join('\n'))}">${vals.length} ${crPlural(vals.length, CR_DIMS[k].forms)}</span></td>`;
+    return `<td><span class="cr-many" title="${esc(vals.sort().slice(0, 40).join('\n') + (vals.length > 40 ? '\n…' : ''))}">${fmtNum(vals.length)} ${crPlural(vals.length, forms)}</span></td>`;
   }
   function cell(n, c) {
-    const a = n.a, z = v => v ? fmtNum(v) : '<span class="dash">0</span>';
-    switch (c.k) {
-      case 'id': return `<td class="num id">${n.kind === 'leaf' ? n.id : ''}</td>`;
-      case 'projects': return `<td class="num">${n.kind === 'leaf' ? '' : fmtNum(a.projects)}</td>`;
-      case 'fields': return `<td class="num">${z(a.fields)}</td>`;
-      case 'images': return `<td class="num">${z(a.images)}</td>`;
-      case 'noPrice': return `<td class="num">${a.noPrice ? `<span class="cr-np">${fmtNum(a.noPrice)}</span>` : '<span class="dash">0</span>'}</td>`;
-      case 'errors': return `<td class="num">${a.errors ? `<span class="cr-err">${fmtNum(a.errors)}</span>` : '<span class="dash">0</span>'}</td>`;
-      case 'text': return `<td class="num">${crMoney(a.text)}</td>`;
-      case 'img': return `<td class="num">${crMoney(a.img)}</td>`;
-      case 'avg': return `<td class="num">${n.kind === 'leaf' ? '' : crMoney(a.avg)}</td>`;
-      case 'share': { const p = R.total.total ? a.total / R.total.total * 100 : 0; return `<td class="num"><span class="cr-share"><span class="cr-sb"><i style="width:${Math.min(100, p).toFixed(1)}%"></i></span>${p.toLocaleString('ru-RU', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %</span></td>`; }
-      case 'total': return `<td class="num cr-total">${crMoney(a.total)}</td>`;
-      case 'first': return `<td class="id">${crTs(a.first)}</td>`;
-      case 'last': return `<td class="id">${crTs(a.last)}</td>`;
-      default: return dimCell(n, c.k);
-    }
+    if ((c.leafOnly && n.kind !== 'leaf') || (c.groupOnly && n.kind === 'leaf')) return `<td class="${c.num ? 'num' : ''}"></td>`;
+    if (c.cell) return c.cell(n, H);
+    if (c.attr) return attrCell(n, c.k);
+    return `<td class="${c.num ? 'num' : ''}">${c.num ? H.z(n.a[c.k]) : esc(n.a[c.k] ?? '')}</td>`;
   }
   function row(n, depth, cs) {
     const isG = n.kind !== 'leaf', open = isG && S.open.has(n.path);
     const name = isG
-      ? `<button class="cr-tg" data-crtoggle="${esc(n.path)}" aria-expanded="${open}">${I.chev}</button><span class="cr-gl">${esc(n.label)}</span>`
+      ? `<button class="cr-tg" data-crtoggle="${esc(n.path)}" aria-expanded="${open}">${I.chev}</button><span class="cr-gl${groupLabel(n.label) !== n.label ? ' cr-none' : ''}">${esc(groupLabel(n.label))}</span>`
       : `<span class="cr-pn link" title="${esc(n.label)}">${esc(n.label)}</span>`;
     return `<tr class="cr-${n.kind}${open ? ' open' : ''}"${isG ? ` data-crrow="${esc(n.path)}"` : ''}><td class="cr-name pinned pinned-last" style="left:0"><div class="cr-in" style="padding-left:${depth * 22}px">${name}</div></td>${cs.map(c => cell(n, c)).join('')}</tr>`;
   }
   function leafRows(n, depth, cs) {
-    const ls = leaves(n.facts), shown = S.more[n.path] || CR_LEAF_PAGE;
+    const ls = leaves(n.facts), shown = S.more[n.path] || PAGE;
     let h = ls.slice(0, shown).map(l => row(l, depth, cs)).join('');
-    if (ls.length > shown) h += `<tr class="cr-more"><td class="pinned pinned-last" style="left:0"><div class="cr-in" style="padding-left:${depth * 22}px"><button class="link cr-mb" data-crmore="${esc(n.path)}">Показать ещё ${Math.min(CR_LEAF_PAGE, ls.length - shown)} из ${ls.length - shown}</button></div></td><td colspan="${cs.length}"></td></tr>`;
+    if (ls.length > shown) h += `<tr class="cr-more"><td class="pinned pinned-last" style="left:0"><div class="cr-in" style="padding-left:${depth * 22}px"><button class="link cr-mb" data-crmore="${esc(n.path)}">Показать ещё ${Math.min(PAGE, ls.length - shown)} из ${ls.length - shown}</button></div></td><td colspan="${cs.length}"></td></tr>`;
     return h;
   }
   function renderTable() {
     const cs = cols(), sortTh = (k, l, num, t) => { const on = S.sort.key === k; return `<th class="${num ? 'num ' : ''}${on ? 'sorted' : ''}" data-crsort="${k}"${t ? ` title="${esc(t)}"` : ''}><div class="thc"><span class="thl">${esc(l)}<span class="sarr ${on ? '' : 'ghost'}">${on && S.sort.dir === 'asc' ? I.up : I.down}</span></span></div></th>`; };
-    const tl = [CR_DIMS[S.g1].label, S.g2 && CR_DIMS[S.g2].label, 'Проект'].filter(Boolean).join(' › ');
-    const head = `<tr>${sortTh('name', tl, false).replace('<th class="', '<th class="pinned pinned-last cr-name ').replace('data-crsort', 'style="left:0" data-crsort')}${cs.map(c => sortTh(c.k, c.l, c.num, c.t)).join('')}</tr>`;
+    const head = `<tr>${sortTh('name', treeLabel(), false).replace('<th class="', '<th class="pinned pinned-last cr-name ').replace('data-crsort', 'style="left:0" data-crsort')}${cs.map(c => sortTh(c.k, c.l, c.num, c.t)).join('')}</tr>`;
     let body = '';
     for (const g of R.tree) {
       body += row(g, 0, cs);
@@ -1411,11 +1398,11 @@ const COST = (() => {
       else body += leafRows(g, 1, cs);
     }
     const tot = { kind: 'total', label: 'Итого', a: R.total };
-    const foot = R.tree.length ? `<tr><td class="cr-name pinned pinned-last" style="left:0"><div class="cr-in">Итого <span class="id">· ${fmtNum(R.total.projects)} ${crPlural(R.total.projects, ['проект', 'проекта', 'проектов'])}</span></div></td>${cs.map(c => CR_DIMS[c.k] ? dimCell(tot, c.k) : cell(tot, c)).join('')}</tr>` : '';
+    const foot = R.tree.length ? `<tr><td class="cr-name pinned pinned-last" style="left:0"><div class="cr-in">Итого <span class="id">· ${fmtNum(R.total.projects)} ${leafWord(R.total.projects)}</span></div></td>${cs.map(c => cell(tot, c)).join('')}</tr>` : '';
     const width = 300 + cs.reduce((s, c) => s + c.w, 0);
     part('table').innerHTML = R.tree.length
       ? `<table style="width:${width}px"><colgroup><col style="width:300px">${cs.map(c => `<col style="width:${c.w}px">`).join('')}</colgroup><thead>${head}</thead><tbody>${body}</tbody><tfoot>${foot}</tfoot></table>`
-      : `<div class="empty"><b>Нет генераций</b>За выбранный период и фильтры расходов нет. <button class="link cr-mb" data-crreset>Сбросить фильтры</button></div>`;
+      : `<div class="empty"><b>Нет данных</b>${esc(cfg.emptyText || 'За выбранный период и фильтры ничего не найдено.')} <button class="link cr-mb" data-crreset>Сбросить фильтры</button></div>`;
   }
 
   /* ---- popovers ---- */
@@ -1436,38 +1423,41 @@ const COST = (() => {
   function groupMenu(level) {
     const cur = level === '1' ? S.g1 : S.g2, other = level === '1' ? S.g2 : S.g1;
     return `<div class="ph">${level === '1' ? 'Первый уровень' : 'Второй уровень'}</div>` +
-      CR_DIM_KEYS.map(k => { const swap = k === other && cur; if (k === other && !cur) return `<button class="pi" disabled style="color:var(--muted)">${CR_DIMS[k].label}<span class="k">уже 1-й уровень</span></button>`;
-        return `<button class="pi ${cur === k ? 'on' : ''}" data-crgroup="${level}:${k}">${CR_DIMS[k].label}${swap ? '<span class="k">поменять уровни местами</span>' : cur === k ? `<span class="k">${I.check}</span>` : ''}</button>`; }).join('') +
+      GK.map(k => { if (k === other && !cur) return `<button class="pi" disabled style="color:var(--muted)">${DIMS[k].label}<span class="k">уже 1-й уровень</span></button>`;
+        return `<button class="pi ${cur === k ? 'on' : ''}" data-crgroup="${level}:${k}">${DIMS[k].label}${k === other ? '<span class="k">поменять уровни местами</span>' : cur === k ? `<span class="k">${I.check}</span>` : ''}</button>`; }).join('') +
       (level === '2' ? `<hr><button class="pi ${!S.g2 ? 'on' : ''}" data-crgroup="2:">Без 2-го уровня</button>` : '');
   }
   function colsMenu() {
-    const g = hiddenCols(), { order, hidden } = S.profile;
+    const g = groupedCols(), { order, hidden } = S.profile;
     return `<div class="ph"><span>Столбцы</span><span class="link" data-crcolsreset>По умолчанию</span></div>
-      <ul class="cols"><li class="fixed"><span class="grip" style="visibility:hidden">${I.grip}</span><input type="checkbox" checked disabled><span class="nm">${[CR_DIMS[S.g1].label, S.g2 && CR_DIMS[S.g2].label, 'Проект'].filter(Boolean).join(' › ')}</span></li>
+      <ul class="cols"><li class="fixed"><span class="grip" style="visibility:hidden">${I.grip}</span><input type="checkbox" checked disabled><span class="nm">${esc(treeLabel())}</span></li>
       ${order.map(k => { const c = COLMAP[k], grp = g.has(k);
-        return `<li draggable="true" data-drag="${k}"${grp ? ' title="Значение показано в дереве группировки"' : ''}><span class="grip">${I.grip}</span><input type="checkbox" data-crcolvis="${k}" id="crcv-${k}" ${hidden.includes(k) ? '' : 'checked'} ${grp ? 'disabled' : ''}><label class="nm" for="crcv-${k}"${grp ? ' style="color:var(--muted)"' : ''}>${esc(c.t && c.l.length < 8 ? c.t : c.l)}</label>${grp ? '<span class="k" style="color:var(--muted);font-size:11px">в группировке</span>' : ''}</li>`; }).join('')}</ul>
+        return `<li draggable="true" data-drag="${k}"${grp ? ' title="Значение показано в дереве группировки"' : ''}><span class="grip">${I.grip}</span><input type="checkbox" data-crcolvis="${k}" id="cv-${cfg.key}-${k}" ${hidden.includes(k) ? '' : 'checked'} ${grp ? 'disabled' : ''}><label class="nm" for="cv-${cfg.key}-${k}"${grp ? ' style="color:var(--muted)"' : ''}>${esc(c.t && c.l.length < 8 ? c.t : c.l)}</label>${grp ? '<span class="k" style="color:var(--muted);font-size:11px">в группировке</span>' : ''}</li>`; }).join('')}</ul>
       <div class="note">Перетащите строку, чтобы изменить порядок. Столбцы измерений, по которым идёт группировка, скрываются автоматически.</div>`;
   }
   function filterMenu(k) {
     const counts = new Map(); for (const f of baseFacts(k)) { if (!counts.has(f[k])) counts.set(f[k], new Set()); counts.get(f[k]).add(f.pid); }
-    const allVals = [...new Set(CR_DATA.facts.map(f => f[k]))].sort((a, b) => (counts.get(b)?.size || 0) - (counts.get(a)?.size || 0) || String(a).localeCompare(b, 'ru'));
+    const allVals = [...new Set(cfg.allValues ? cfg.allValues(k) : periodFacts().map(f => f[k]))].sort((a, b) => (counts.get(b)?.size || 0) - (counts.get(a)?.size || 0) || String(a).localeCompare(b, 'ru'));
     const sel = S.filters[k] && S.filters[k].length ? S.filters[k] : null, q = S.fsearch.trim().toLowerCase();
-    const list = allVals.filter(v => !q || String(v).toLowerCase().includes(q));
-    return `<div class="ph"><span>${CR_DIMS[k].label}</span>${sel ? `<button class="link" data-crfclear="${k}">Сбросить</button>` : ''}</div>
+    const list = allVals.filter(v => !q || String(groupLabel(v)).toLowerCase().includes(q));
+    return `<div class="ph"><span>${DIMS[k].label}</span>${sel ? `<button class="link" data-crfclear="${k}">Сбросить</button>` : ''}</div>
       ${allVals.length > 8 ? `<input class="fsearch" data-crfsearch placeholder="Найти…" value="${esc(S.fsearch)}">` : ''}
-      <div class="flist">${list.map(v => { const c = counts.get(v)?.size || 0; return `<label class="${c ? '' : 'zero'}"><input type="checkbox" data-crfval="${k}" value="${esc(v)}" ${sel && sel.includes(v) ? 'checked' : ''}><span class="v">${hl(v, q)}</span><span class="c">${fmtNum(c)}</span></label>`; }).join('') || '<div class="note">Ничего не найдено</div>'}</div>
-      <div class="note">Число — проектов с генерациями за период. Ничего не отмечено = все.</div>`;
+      <div class="flist">${list.map(v => { const c = counts.get(v)?.size || 0; return `<label class="${c ? '' : 'zero'}"><input type="checkbox" data-crfval="${k}" value="${esc(v)}" ${sel && sel.includes(v) ? 'checked' : ''}><span class="v">${hl(groupLabel(v), q)}</span><span class="c">${fmtNum(c)}</span></label>`; }).join('') || '<div class="note">Ничего не найдено</div>'}</div>
+      <div class="note">${esc(cfg.filterNote || 'Число — проектов за период.')} Ничего не отмечено = все.</div>`;
   }
 
   /* ---- export ---- */
   function doExport() {
     const cs = cols(), lines = [];
-    const val = (n, c) => { const a = n.a; if (CR_DIMS[c.k]) return n.kind === 'leaf' && c.k === 'model' ? Object.entries(a.mcount).map(([m, x]) => m + ' ' + x).join(' · ') : [...a.vals[c.k]].sort().join(' · ');
-      if (c.k === 'id') return n.id ?? ''; if (c.k === 'share') return R.total.total ? (a.total / R.total.total * 100).toFixed(1) : '0';
-      if (['text', 'img', 'avg', 'total'].includes(c.k)) return a[c.k].toFixed(2); if (c.k === 'first' || c.k === 'last') return a[c.k] || ''; if (c.k === 'projects' && n.kind === 'leaf') return ''; return a[c.k]; };
-    const levels = [CR_DIMS[S.g1].label, S.g2 && CR_DIMS[S.g2].label].filter(Boolean);
-    lines.push(['Уровень', ...levels, 'Проект', ...cs.map(c => c.t || c.l)]);
-    const push = (n, path, lvl) => lines.push([lvl, ...levels.map((_, i) => path[i] ?? ''), n.kind === 'leaf' ? n.label : '', ...cs.map(c => val(n, c))]);
+    const val = (n, c) => {
+      if ((c.leafOnly && n.kind !== 'leaf') || (c.groupOnly && n.kind === 'leaf')) return '';
+      if (c.csv) return c.csv(n, H);
+      if (c.attr) return [...n.a.vals[c.k]].filter(v => v != null && v !== '—').sort().join(' · ');
+      return n.a[c.k] ?? '';
+    };
+    const levels = [DIMS[S.g1].label, S.g2 && DIMS[S.g2].label].filter(Boolean);
+    lines.push(['Уровень', ...levels, cfg.leafTitle || 'Проект', ...cs.map(c => c.t || c.l)]);
+    const push = (n, path, lvl) => lines.push([lvl, ...levels.map((_, i) => path[i] != null ? groupLabel(path[i]) : ''), n.kind === 'leaf' ? n.label : '', ...cs.map(c => val(n, c))]);
     for (const g of R.tree) {
       push(g, [g.label], 1);
       if (g.children) for (const g2 of g.children) { push(g2, [g.label, g2.label], 2); for (const l of leaves(g2.facts)) push(l, [g.label, g2.label], 3); }
@@ -1476,8 +1466,8 @@ const COST = (() => {
     lines.push(['Итого', ...levels.map(() => ''), '', ...cs.map(c => val({ kind: 'total', a: R.total }, c))]);
     const csv = '﻿' + lines.map(r => r.map(v => { v = String(v ?? ''); return /[;"\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(';')).join('\n');
     const [a, b] = range(), url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })), lnk = document.createElement('a');
-    lnk.href = url; lnk.download = `cost-report_${a}_${b}.csv`; document.body.appendChild(lnk); lnk.click(); lnk.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
-    toast(`Выгружено ${fmtNum(lines.length - 2)} строк: группы и проекты с учётом фильтров`);
+    lnk.href = url; lnk.download = `${cfg.key}_${a}_${b}.csv`; document.body.appendChild(lnk); lnk.click(); lnk.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast(`Выгружено ${fmtNum(lines.length - 2)} строк: группы и ${cfg.leafsGen || 'проекты'} с учётом фильтров`);
   }
 
   /* ---- events ---- */
@@ -1487,8 +1477,8 @@ const COST = (() => {
     const per = c('[data-crperiod]'); if (per) { S.period = per.dataset.crperiod; S.more = {}; return render(); }
     const tg = c('[data-crtoggle]') || (!c('button,a,input,.cr-pn') && c('[data-crrow]'));
     if (tg) { const p = tg.dataset.crtoggle ?? tg.dataset.crrow; S.open.has(p) ? S.open.delete(p) : S.open.add(p); return render(); }
-    const mr = c('[data-crmore]'); if (mr) { const p = mr.dataset.crmore; S.more[p] = (S.more[p] || CR_LEAF_PAGE) + CR_LEAF_PAGE; return render(); }
-    const srt = c('[data-crsort]'); if (srt) { const k = srt.dataset.crsort, txt = k === 'name' || k === 'first' || k === 'last' || CR_DIMS[k]; S.sort = S.sort.key === k ? { key: k, dir: S.sort.dir === 'asc' ? 'desc' : 'asc' } : { key: k, dir: txt ? 'asc' : 'desc' }; return render(); }
+    const mr = c('[data-crmore]'); if (mr) { const p = mr.dataset.crmore; S.more[p] = (S.more[p] || PAGE) + PAGE; return render(); }
+    const srt = c('[data-crsort]'); if (srt) { const k = srt.dataset.crsort, col = COLMAP[k], txt = k === 'name' || (col && (col.attr || col.textSort)); S.sort = S.sort.key === k ? { key: k, dir: S.sort.dir === 'asc' ? 'desc' : 'asc' } : { key: k, dir: txt ? 'asc' : 'desc' }; return render(); }
     if (c('[data-crexpand]')) {
       const allOpen = R.tree.every(n => S.open.has(n.path));
       if (allOpen) S.open.clear(); else for (const g of R.tree) { S.open.add(g.path); if (g.children) g.children.forEach(x => S.open.add(x.path)); }
@@ -1522,21 +1512,152 @@ const COST = (() => {
     if (t.dataset.crfsearch != null) { S.fsearch = t.value; S.menu.focusSearch = true; renderMenu(); }
   }
   function onKeydown(e) { if (e.key === 'Escape' && e.target.classList.contains('cr-q') && S.q) { S.q = ''; render(); root.querySelector('.cr-q').focus(); } }
-  const api = { key: 'cost-report', mount, unmount, render, onClick, onChange, onInput, onKeydown, closeMenu, hasMenu: () => !!S.menu, S, saveProfile,
+  const api = { key: cfg.key, route: cfg.route, mount, unmount, render, onClick, onChange, onInput, onKeydown, closeMenu, hasMenu: () => !!S.menu, S, saveProfile,
     focusSearch: () => { const q = root && root.querySelector('.cr-q'); if (q) q.focus(); } };
   return api;
-})();
-const CR_I = {
-  expand: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6l3-3 3 3M5 10l3 3 3-3"/></svg>',
-  collapse: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l3 3 3-3M5 13l3-3 3 3"/></svg>',
+}
+
+/* ---- отчёт: себестоимость API ---- */
+const COST = makePivot({
+  key: 'cost-report', route: '#/cost-report', title: 'Отчёт по себестоимости API',
+  note: 'Расход на генерацию контента — прикидка по токенам (ориентир, не счёт поставщика). Цена текста записывается с 21.09.2026 — более ранние генерации в сумму не входят (видны в столбце «Без цены»), картинок (логотипы, фавиконы, изображения блоков) — с 29.09.2026.',
+  dims: CR_DIMS, groupKeys: CR_DIM_KEYS, defaultGroup: ['team', 'provider'], cols: CR_COLS, minDate: CR_DATA.minDate,
+  periods: ['today', '7d', '30d', 'month', 'prev', 'all'], defaultPeriod: '30d', defaultSort: { key: 'total', dir: 'desc' },
+  facts: (a, b) => CR_DATA.facts.filter(f => f.date >= a && f.date <= b),
+  search: (f, q) => f.name.toLowerCase().includes(q) || String(f.pid).includes(q),
+  leafLabel: f => f.name, emptyText: 'За выбранный период и фильтры расходов нет.', filterNote: 'Число — проектов с генерациями за период.',
+  agg(a, f) {
+    if (a.fields == null) Object.assign(a, { fields: 0, images: 0, noPrice: 0, errors: 0, text: 0, img: 0, first: null, last: null, mcount: {} });
+    a.fields += f.fields; a.images += f.images; a.noPrice += f.noPrice; a.errors += f.errors; a.text += f.text; a.img += f.img;
+    if (!a.first || f.t0 < a.first) a.first = f.t0; if (!a.last || f.t1 > a.last) a.last = f.t1;
+    a.mcount[f.model] = (a.mcount[f.model] || 0) + f.fields + f.images;
+  },
+  finish(a) { if (a.fields == null) Object.assign(a, { fields: 0, images: 0, noPrice: 0, errors: 0, text: 0, img: 0, mcount: {} }); a.total = a.text + a.img; a.avg = a.projects ? a.total / a.projects : 0; },
+  kpis({ R, groupBy }) {
+    const t = R.total, all = CR_DATA.projects.length;
+    const per = [...groupBy(R.facts, 'pid').values()].map(fs => fs.reduce((s, f) => s + f.text + f.img, 0)).sort((x, y) => x - y);
+    const med = per.length ? per[Math.floor(per.length / 2)] : 0, max = per.length ? per[per.length - 1] : 0;
+    const withErr = new Set(R.facts.filter(f => f.errors).map(f => f.pid)).size;
+    return `
+      <div class="kpi"><div class="l">Потрачено за период</div><div class="v">${crMoney(t.total)}</div>
+        <div class="s">текст ${crMoney(t.text)} · картинки ${crMoney(t.img)}</div><div class="s">полей ${fmtNum(t.fields)} · картинок ${fmtNum(t.images)} · без цены ${fmtNum(t.noPrice)}</div></div>
+      <div class="kpi"><div class="l">Средняя стоимость 1 проекта</div><div class="v">${crMoney(t.avg)}</div>
+        <div class="s">медиана ${crMoney(med)} · максимум ${crMoney(max)}</div><div class="s">по проектам с генерациями за период</div></div>
+      <div class="kpi"><div class="l">Всего проектов</div><div class="v">${fmtNum(t.projects)}</div>
+        <div class="s">с генерациями за период · всего в системе ${fmtNum(all)}</div><div class="s">${withErr ? `с ошибками генерации: <b class="cr-err">${fmtNum(withErr)}</b>` : 'без ошибок генерации'}</div></div>`;
+  },
+});
+
+/* ---- отчёт: сводный по проектам (#/projects-report) ----
+   Период фильтрует проекты по дате запуска; показы/клики GSC считаются за тот же период (дневной ряд → префиксные суммы). */
+const PR_DIMS = {
+  team: { label: 'Команда', forms: ['команда', 'команды', 'команд'] },
+  owner: { label: 'Ответственный', forms: ['ответственный', 'ответственных', 'ответственных'] },
+  scheme: { label: 'Схема', forms: ['схема', 'схемы', 'схем'] },
+  template: { label: 'Шаблон', forms: ['шаблон', 'шаблона', 'шаблонов'] },
+  pp: { label: 'ПП ссылка', forms: ['ссылка', 'ссылки', 'ссылок'] },
+  lang: { label: 'html lang', forms: ['язык', 'языка', 'языков'] },
+  brand: { label: 'Бренд', forms: ['бренд', 'бренда', 'брендов'] },
+  slot: { label: 'Слот', forms: ['слот', 'слота', 'слотов'] },
 };
+const PR_DATA = (() => {
+  let s = 20261017; const r = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+  const pk = a => a[Math.floor(r() * a.length)], ri = (a, b) => a + Math.floor(r() * (b - a + 1));
+  const TEAMS = {
+    'Команда Димы': { owners: ['Александр С.', 'Сергей М.', 'Андрей Б.', 'Андрей С.'], tpl: ['Stitch-AI - tz-1', 'Stitch-AI - tz-5', 'Stitch-AI-2 - tz-1'], schemes: ['Дженерик + PBN', 'PBN-сателлит', 'Дженерик + PBN'] },
+    'Команда Кости': { owners: ['Юлия', 'Bondarenko', 'D Kandyukin'], tpl: ['Дженерик', 'Дженерик', 'Моно'], schemes: ['Моно-бренд', 'Дженерик + PBN', 'Лендинг под ПП'] },
+    'Команда Саши': { owners: ['Suyangulova Y', 'I Lapshin'], tpl: ['Дженерик', 'Ревью'], schemes: ['Ревью-сетка', 'Дженерик + PBN', 'Лендинг под ПП'] },
+  };
+  const LANG = { cz: 'cs-CZ', ro: 'ro-RO', sk: 'sk-SK', se: 'sv-SE', pl: 'pl-PL', fi: 'fi-FI' };
+  const SLOTS = ['Gates of Olympus', 'Sweet Bonanza', 'Book of Dead', 'Big Bass Bonanza', 'Starburst', 'Aviator', 'Plinko', 'Sugar Rush'];
+  const PP = {}; for (const b of BRANDS) PP[b] = Array.from({ length: ri(2, 4) }, () => `${b.toLowerCase().replace(/\s+/g, '')}.partners/?btag=zv_${ri(10, 99)}`);
+  const START = new Date(2024, 10, 1), dayIdx = d => Math.round((d - START) / DAY), todayIdx = dayIdx(CR_TODAY);
+  const teamNames = Object.keys(TEAMS), projects = [];
+  let id = 1270, bn = 1460;
+  for (let i = 0; i < 620; i++) {
+    const x = r(), team = x < .5 ? teamNames[0] : x < .75 ? teamNames[1] : teamNames[2], T = TEAMS[team];
+    const L = pk(LANGS), name = team === teamNames[0] ? 'b-' + (bn--) : pk(L.names) + (r() < .45 ? ' - ' + ri(2, 24) : '');
+    const template = pk(T.tpl), scheme = template === 'Моно' ? 'Моно-бренд' : pk(T.schemes);
+    const brand = scheme === 'Моно-бренд' || r() < .55 ? pk(BRANDS) : '—', slot = r() < .45 ? pk(SLOTS) : '—';
+    const host = () => Array.from({ length: ri(1, 2) }, () => pk(L.w)).join(pk(['', '-'])) + '.' + L.tld;
+    const domains = [...new Set(Array.from({ length: r() < .15 ? 1 : r() < .8 ? 2 : 3 }, (_, k) => (k && r() < .4 ? 'www.' : '') + host()))];
+    const launchIdx = Math.max(0, todayIdx - Math.floor(Math.pow(r(), 1.6) * (todayIdx + 1)));
+    // дневной ряд GSC: разгон ~60 дней, у части сайтов трафика нет
+    const len = todayIdx - launchIdx + 1, cimp = new Float64Array(len + 1), cclk = new Float64Array(len + 1);
+    const dead = r() < .28, peak = dead ? 0 : Math.exp(r() * 6.2) * (r() < .08 ? 8 : 1), ctr = .01 + r() * .07, ramp = 30 + r() * 60;
+    for (let d = 0; d < len; d++) {
+      const imp = peak ? Math.round(peak * Math.min(1, d / ramp) * (.6 + r() * .8)) : 0, clk = Math.round(imp * ctr * (.6 + r() * .8));
+      cimp[d + 1] = cimp[d] + imp; cclk[d + 1] = cclk[d] + clk;
+    }
+    projects.push({ pid: id--, name, team, owner: pk(T.owners), scheme, template, domains, status: '—', type: '—', brand, slot,
+      pp: brand !== '—' ? pk(PP[brand]) : '—', lang: LANG[L.tld], launch: iso(crAddDays(START, launchIdx)), launchIdx, cimp, cclk });
+  }
+  const sum = (p, c, a, b) => { const lo = Math.max(a, p.launchIdx), hi = Math.min(b, todayIdx); return lo > hi ? 0 : c[hi - p.launchIdx + 1] - c[lo - p.launchIdx]; };
+  return {
+    projects, minDate: iso(START),
+    facts(a, b) {
+      const ai = dayIdx(new Date(a + 'T00:00')), bi = dayIdx(new Date(b + 'T00:00'));
+      return projects.filter(p => p.launch >= a && p.launch <= b).map(p => Object.assign({}, p, { impressions: sum(p, p.cimp, ai, bi), clicks: sum(p, p.cclk, ai, bi) }));
+    },
+  };
+})();
+const PR_COLS = [
+  { k: 'id', l: 'ID', w: 64, num: true, leafOnly: true, cell: n => `<td class="num id">${n.id}</td>`, csv: n => n.id, sort: n => n.id ?? -1 },
+  { k: 'projects', l: 'Проектов', w: 86, num: true, groupOnly: true },
+  { k: 'team', l: 'Команда', w: 128, attr: true },
+  { k: 'owner', l: 'Ответственный', w: 128, attr: true },
+  { k: 'scheme', l: 'Схема', w: 140, attr: true },
+  { k: 'template', l: 'Шаблон', w: 136, attr: true },
+  { k: 'domains', l: 'Домены', w: 250, attr: true, forms: ['домен', 'домена', 'доменов'] },
+  { k: 'status', l: 'Статус', w: 90, attr: true },
+  { k: 'brand', l: 'Бренд', w: 110, attr: true },
+  { k: 'slot', l: 'Слот', w: 140, attr: true },
+  { k: 'impressions', l: 'Показы (GSC)', w: 112, num: true },
+  { k: 'clicks', l: 'Клики (GSC)', w: 104, num: true },
+  { k: 'type', l: 'Тип проекта', w: 108, attr: true },
+  { k: 'pp', l: 'ПП ссылка', w: 230, attr: true },
+  { k: 'lang', l: 'html lang', w: 90, attr: true },
+  { k: 'launch', l: 'Дата запуска', w: 190, textSort: true, sort: n => n.a.lmin,
+    cell: n => `<td class="${n.kind === 'leaf' ? '' : 'id'}">${n.kind === 'leaf' || n.a.lmin === n.a.lmax ? fmtDate(n.a.lmin) : `${fmtDate(n.a.lmin)} — ${fmtDate(n.a.lmax)}`}</td>`,
+    csv: n => n.kind === 'leaf' || n.a.lmin === n.a.lmax ? fmtDate(n.a.lmin) : `${fmtDate(n.a.lmin)} — ${fmtDate(n.a.lmax)}` },
+];
+const PROJR = makePivot({
+  key: 'projects-report', route: '#/projects-report', title: 'Сводный отчёт по проектам',
+  note: 'Период отбирает проекты по дате запуска; показы и клики Google Search Console считаются за тот же период. «Статус» и «Тип проекта» пока не заполняются.',
+  dims: PR_DIMS, groupKeys: Object.keys(PR_DIMS), defaultGroup: ['team', 'scheme'], cols: PR_COLS, defaultHidden: ['id'], minDate: PR_DATA.minDate,
+  periods: ['today', '7d', '30d', 'month', 'prev', 'year', 'all'], defaultPeriod: 'all', defaultSort: { key: 'clicks', dir: 'desc' },
+  facts: (a, b) => PR_DATA.facts(a, b), allValues: k => PR_DATA.projects.map(p => p[k]),
+  search: (f, q) => f.name.toLowerCase().includes(q) || String(f.pid).includes(q) || f.domains.some(d => d.includes(q)),
+  searchPlaceholder: 'Проект, домен или ID…', leafLabel: f => f.name, emptyText: 'За выбранный период нет запущенных проектов.', filterNote: 'Число — проектов, запущенных за период.',
+  agg(a, f) {
+    if (a.impressions == null) Object.assign(a, { impressions: 0, clicks: 0, lmin: null, lmax: null });
+    a.impressions += f.impressions; a.clicks += f.clicks;
+    if (!a.lmin || f.launch < a.lmin) a.lmin = f.launch; if (!a.lmax || f.launch > a.lmax) a.lmax = f.launch;
+  },
+  finish(a) { if (a.impressions == null) Object.assign(a, { impressions: 0, clicks: 0, lmin: null, lmax: null }); },
+  kpis({ R, range }) {
+    const t = R.total, [a, b] = range(), withTr = R.facts.filter(f => f.clicks > 0).length;
+    const top = R.facts.reduce((m, f) => !m || f.clicks > m.clicks || (f.clicks === m.clicks && f.impressions > m.impressions) ? f : m, null);
+    const ctr = t.impressions ? t.clicks / t.impressions * 100 : 0;
+    return `
+      <div class="kpi"><div class="l">Запущено сайтов за период</div><div class="v">${fmtNum(t.projects)}</div>
+        <div class="s">${fmtDate(a)} — ${fmtDate(b)} · всего в системе ${fmtNum(PR_DATA.projects.length)}</div><div class="s">с кликами за период: ${fmtNum(withTr)}</div></div>
+      <div class="kpi"><div class="l">Показы / клики (GSC)</div><div class="v">${fmtNum(t.impressions)} <span class="cr-slash">/</span> ${fmtNum(t.clicks)}</div>
+        <div class="s">CTR ${pvPct(ctr)}</div><div class="s">по проектам, запущенным за период</div></div>
+      <div class="kpi"><div class="l">Проект с самым большим трафиком</div>${top && top.clicks ? `<div class="v cr-top"><span class="cr-pn link" title="${esc(top.name)}">${esc(top.name)}</span></div>
+        <div class="s">клики ${fmtNum(top.clicks)} · показы ${fmtNum(top.impressions)} · ${pvPct(t.clicks ? top.clicks / t.clicks * 100 : 0)} всех кликов</div><div class="s">${esc(top.team)} · ${esc(top.domains[0])}</div>`
+        : '<div class="v"><span class="dash">—</span></div><div class="s">нет кликов за период</div>'}</div>`;
+  },
+});
+
+const PIVOTS = [COST, PROJR];
 
 /* =========================================================
    LAYOUT STATE + RENDER
    ========================================================= */
 const state = {
   view: 'list', entity: 'projects', project: null, tab: 'overview',
-  starred: new Set(store.get('starred.v2', null) || [...store.get('starred', DEFAULT_STARS), 'cost-report']), collapsed: new Set(), sideCollapsed: store.get('sideCollapsed', false), railOpen: null,
+  starred: new Set(store.get('starred.v3', null) || [...(store.get('starred.v2', null) || [...store.get('starred', DEFAULT_STARS), 'cost-report']), 'projects-report']), collapsed: new Set(), sideCollapsed: store.get('sideCollapsed', false), railOpen: null,
   team: TEAMS[0], megaOpen: false, teamOpen: false, userOpen: false, moreOpen: false, psOpen: false, psQuery: '', psHl: 0,
 };
 function go(patch) { Object.assign(state, patch); render(); }
@@ -1627,9 +1748,10 @@ function renderProject() {
 }
 function renderMain() {
   const m = $('#main');
-  if (state.view === 'project' && state.project) { if (ACTIVE) ACTIVE.unmount(); COST.unmount(); m.innerHTML = renderProject(); }
-  else if (state.entity === 'cost-report') { if (ACTIVE && ACTIVE !== COST) ACTIVE.unmount(); COST.mount(m); }
-  else { const t = tableFor(state.entity); if (ACTIVE && ACTIVE !== t) ACTIVE.unmount(); if (COST !== ACTIVE) COST.unmount(); m.innerHTML = ''; t.mount(m); }
+  const pv = PIVOTS.find(x => x.key === state.entity);
+  if (state.view === 'project' && state.project) { if (ACTIVE) ACTIVE.unmount(); PIVOTS.forEach(x => x.unmount()); m.innerHTML = renderProject(); }
+  else if (pv) { if (ACTIVE && ACTIVE !== pv) ACTIVE.unmount(); PIVOTS.forEach(x => x !== pv && x.unmount()); pv.mount(m); }
+  else { const t = tableFor(state.entity); if (ACTIVE && ACTIVE !== t) ACTIVE.unmount(); PIVOTS.forEach(x => x.unmount()); m.innerHTML = ''; t.mount(m); }
 }
 function render() { renderTopnav(); renderMega(); renderSelector(); renderTeam(); renderUser(); renderSide(); renderMain(); renderMorePop(); }
 
@@ -1648,7 +1770,7 @@ document.addEventListener('click', e => {
   if (c('#teamBtn')) return go({ ...closeAll('team'), teamOpen: !state.teamOpen });
   if (c('#userBtn')) return go({ ...closeAll('user'), userOpen: !state.userOpen });
   if (c('#moreBtn') && !c('[data-nav]')) return go({ ...closeAll('more'), moreOpen: !state.moreOpen });
-  const star = c('[data-star]'); if (star) { e.stopPropagation(); const id = star.dataset.star; state.starred.has(id) ? state.starred.delete(id) : state.starred.add(id); store.set('starred.v2', [...state.starred]); return render(); }
+  const star = c('[data-star]'); if (star) { e.stopPropagation(); const id = star.dataset.star; state.starred.has(id) ? state.starred.delete(id) : state.starred.add(id); store.set('starred.v3', [...state.starred]); return render(); }
   const team = c('[data-team]'); if (team) return go({ ...closeAll(), team: team.dataset.team });
   const nav = c('[data-nav]'); if (nav) { window.scrollTo({ top: 0 }); return go({ ...closeAll(), view: 'list', entity: nav.dataset.nav }); }
   const tab = c('[data-tab]'); if (tab) return go({ ...closeAll(), tab: tab.dataset.tab, railOpen: null });
@@ -1676,7 +1798,7 @@ document.addEventListener('keydown', e => {
 });
 function scrollHl() { const el = document.querySelector('.pitem.hl'); if (el) el.scrollIntoView({ block: 'nearest' }); }
 new ResizeObserver(() => layoutNav()).observe($('#topnav'));
-if (location.hash.startsWith('#/cost-report')) state.entity = 'cost-report';
+{ const pv = PIVOTS.find(x => location.hash.startsWith(x.route)); if (pv) state.entity = pv.key; }
 render();
 </script>
 

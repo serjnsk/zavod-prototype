@@ -519,7 +519,7 @@ const GROUPS = [
   { name: 'PBNmaker', items: [ { id: 'tasks', label: 'Задачи' }, { id: 'acceptors', label: 'Замена акцепторов' } ]},
   { name: 'Регистраторы', items: [ { id: 'accounts', label: 'Аккаунты' }, { id: 'zones', label: 'Доменные зоны' }, { id: 'buyout', label: 'Выкуп доменов', badge: 28 }, { id: 'intercept', label: 'Перехват доменов' } ]},
   { name: 'Монобренды', items: [ { id: 'reflinks', label: 'Реф. ссылки' }, { id: 'monobrands', label: 'Монобренды' }, { id: 'games', label: 'Игры' } ]},
-  { name: 'Админ', items: [ { id: 'cloudflare', label: 'Cloudflare аккаунты' }, { id: 'servers', label: 'Сервера' }, { id: 'monitoring', label: 'Мониторинг' }, { id: 'cost-report', label: 'Финансовый отчёт' }, { id: 'users', label: 'Пользователи' }, { id: 'settings', label: 'Настройки системы' } ]},
+  { name: 'Админ', items: [ { id: 'cloudflare', label: 'Cloudflare аккаунты' }, { id: 'servers', label: 'Сервера' }, { id: 'monitoring', label: 'Мониторинг' }, { id: 'cost-report', label: 'Отчёт по себестоимости API' }, { id: 'users', label: 'Пользователи' }, { id: 'settings', label: 'Настройки системы' } ]},
 ];
 const ALL_ITEMS = GROUPS.flatMap(g => g.items);
 const itemById = id => ALL_ITEMS.find(i => i.id === id);
@@ -1300,7 +1300,7 @@ const COST = (() => {
   function mount(container) {
     if (!S.hashRead) readHash();
     root = container; ACTIVE = api;
-    root.innerHTML = `<div class="page-head cr-head"><h1>Финансовый отчёт</h1><div class="seg" data-crpart="periods"></div>
+    root.innerHTML = `<div class="page-head cr-head"><h1>Отчёт по себестоимости API</h1><div class="seg" data-crpart="periods"></div>
         <div class="cr-dates"><input type="date" data-crdate="from"><span>—</span><input type="date" data-crdate="to"></div>
         <div class="spacer"></div><span data-crpart="colsbtn" style="display:contents"></span><button class="btn" data-crexport>${I.dl} Скачать CSV</button></div>
       <p class="cr-note">Расход на генерацию контента — прикидка по токенам (ориентир, не счёт поставщика). Цена текста записывается с 21.09.2026 — более ранние генерации в сумму не входят (видны в столбце «Без цены»), картинок (логотипы, фавиконы, изображения блоков) — с 29.09.2026.</p>

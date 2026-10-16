@@ -339,6 +339,66 @@ a.pname:hover,.pname.link:hover{text-decoration:underline;color:var(--accent)}
 .toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);z-index:120;background:#fff;border:1px solid var(--border);box-shadow:var(--shadow);border-radius:10px;padding:10px 14px;font-size:12.5px;display:flex;gap:8px;align-items:center;color:var(--text);pointer-events:none}
 .toast .ok{color:var(--green)}
 
+/* =========================================================
+   COST REPORT (#/cost-report)
+   ========================================================= */
+.cr-head{margin-bottom:6px}
+.cr-dates{display:flex;align-items:center;gap:6px;color:var(--muted)}
+.cr-dates input{height:30px;border:1px solid var(--border);border-radius:8px;padding:0 8px;background:#fff;font-size:12.5px;color:var(--text);outline:0}
+.cr-dates input:focus{border-color:var(--accent)}
+.cr-note{margin:0 0 12px;color:var(--muted);font-size:12px;max-width:1100px}
+.cr-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:900px){.cr-kpis{grid-template-columns:1fr}}
+.cr-kpis .kpi .s{color:var(--muted);font-size:12px;margin-top:2px;font-variant-numeric:tabular-nums}
+.cr-kpis .kpi .s:first-of-type{margin-top:4px}
+.cr-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;border-bottom:1px solid var(--border)}
+.cr-group{display:flex;align-items:center;gap:6px}
+.cr-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-weight:600;margin-right:2px}
+.cr-g{font-weight:500;gap:6px}
+.cr-g svg,.cr-f svg{color:var(--muted)}
+.cr-g.empty{color:var(--muted);font-weight:400;border-style:dashed}
+.cr-n{width:18px;height:18px;border-radius:50%;background:var(--accent-bg);color:var(--accent);font-size:11px;font-weight:600;display:inline-grid;place-items:center}
+.cr-sep{color:#b3b9c4}
+.cr-leaf{color:var(--muted);font-size:12.5px}
+.cr-vsep{width:1px;height:22px;background:var(--border);margin:0 4px}
+.cr-search{flex:0 1 220px;min-width:180px;height:32px}
+.cr-f b{font-weight:500}
+.cr-f.on b{color:var(--accent)}
+.btn.menu-open{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.cr-reset{display:inline-flex;align-items:center;gap:5px;border:0;background:none;color:var(--muted);font-size:12px;padding:0 4px}
+.cr-reset:hover{color:var(--red)}
+.cr-dt{max-height:calc(100vh - 330px)}
+.cr-dt th,.cr-dt td{white-space:nowrap}
+.cr-dt td{vertical-align:middle;padding-top:8px;padding-bottom:8px}
+.cr-dt th.cr-name .thc{padding-left:12px}
+.cr-dt td.cr-name{padding-left:8px}
+.cr-in{display:flex;align-items:center;gap:6px;min-width:0}
+.cr-tg{width:22px;height:22px;border:0;background:none;border-radius:5px;color:var(--muted);display:grid;place-items:center;flex:none}
+.cr-tg:hover{background:var(--hover);color:var(--text)}
+.cr-tg svg{transition:transform .15s;transform:rotate(-90deg)}
+tr.open .cr-tg svg{transform:none}
+.cr-gl{overflow:hidden;text-overflow:ellipsis}
+.cr-pn{overflow:hidden;text-overflow:ellipsis;display:block;padding-left:28px;color:var(--text)}
+.cr-pn:hover{color:var(--accent)}
+.cr-dt tr.cr-g1,.cr-dt tr.cr-g2{cursor:pointer}
+.cr-dt tr.cr-g1 td{background:#fafbfc;font-weight:600;color:#111827;border-bottom-color:var(--border)}
+.cr-dt tr.cr-g2 td{font-weight:500}
+.cr-dt tr.cr-g1:hover td,.cr-dt tr.cr-g2:hover td{background:#f3f5f8}
+.cr-dt tr.cr-leaf td{color:var(--text-2)}
+.cr-dt tr.cr-leaf td.cr-total{color:var(--text)}
+.cr-total{font-weight:600}
+.cr-many{color:var(--muted);border-bottom:1px dotted #c0c5cd;cursor:help;font-weight:400}
+.cr-err{color:var(--red)}
+.cr-np{color:#b45309}
+.cr-share{display:inline-flex;align-items:center;gap:8px;justify-content:flex-end}
+.cr-sb{width:46px;height:5px;border-radius:3px;background:#eef0f3;overflow:hidden;display:inline-block}
+.cr-sb i{display:block;height:100%;background:var(--accent);border-radius:3px}
+.cr-dt tr.cr-more td{background:#fff}
+.cr-mb{border:0;background:none;padding:0;font-size:12px}
+.cr-dt tfoot td{position:sticky;bottom:0;z-index:2;background:#f6f7f9;border-top:1px solid var(--border);border-bottom:0;font-weight:600;color:#111827}
+.cr-dt tfoot td.pinned{z-index:3}
+.cr-dt tfoot .cr-many{font-weight:400}
+
 @media (max-width:820px){.team-btn .col{display:none}.dt{max-height:none}}
 @media (max-width:640px){
   .top{padding:0 10px;gap:6px}
@@ -459,11 +519,11 @@ const GROUPS = [
   { name: 'PBNmaker', items: [ { id: 'tasks', label: 'Задачи' }, { id: 'acceptors', label: 'Замена акцепторов' } ]},
   { name: 'Регистраторы', items: [ { id: 'accounts', label: 'Аккаунты' }, { id: 'zones', label: 'Доменные зоны' }, { id: 'buyout', label: 'Выкуп доменов', badge: 28 }, { id: 'intercept', label: 'Перехват доменов' } ]},
   { name: 'Монобренды', items: [ { id: 'reflinks', label: 'Реф. ссылки' }, { id: 'monobrands', label: 'Монобренды' }, { id: 'games', label: 'Игры' } ]},
-  { name: 'Админ', items: [ { id: 'cloudflare', label: 'Cloudflare аккаунты' }, { id: 'servers', label: 'Сервера' }, { id: 'monitoring', label: 'Мониторинг' }, { id: 'users', label: 'Пользователи' }, { id: 'settings', label: 'Настройки системы' } ]},
+  { name: 'Админ', items: [ { id: 'cloudflare', label: 'Cloudflare аккаунты' }, { id: 'servers', label: 'Сервера' }, { id: 'monitoring', label: 'Мониторинг' }, { id: 'cost-report', label: 'Финансовый отчёт' }, { id: 'users', label: 'Пользователи' }, { id: 'settings', label: 'Настройки системы' } ]},
 ];
 const ALL_ITEMS = GROUPS.flatMap(g => g.items);
 const itemById = id => ALL_ITEMS.find(i => i.id === id);
-const DEFAULT_STARS = ['projects', 'domains', 'schemes', 'casino', 'tasks', 'buyout', 'monitoring'];
+const DEFAULT_STARS = ['projects', 'domains', 'schemes', 'casino', 'tasks', 'buyout', 'monitoring', 'cost-report'];
 const PROJECT_NAV = [
   { flat: true, icon: 'overview', items: [{ id: 'overview', label: 'Обзор', icon: 'overview' }] },
   { name: 'Сайт', icon: 'site', items: [ { id: 'p-domains', label: 'Домены' }, { id: 'p-design', label: 'Шаблон и дизайн' }, { id: 'p-pages', label: 'Страницы' }, { id: 'p-content', label: 'Контент' } ]},
@@ -680,7 +740,10 @@ function makeTable(cfg) {
     root.querySelector('[data-part="table"]').addEventListener('scroll', e => e.target.classList.toggle('scrolled', e.target.scrollLeft > 0));
     render();
   }
-  function unmount() { if (ACTIVE === api) { ACTIVE = null; S.menu = null; $('#tpop').innerHTML = ''; $('#bulk').innerHTML = ''; } root = null; }
+  function unmount() {
+    if (root) { root.removeEventListener('click', onClick); root.removeEventListener('change', onChange); root.removeEventListener('input', onInput); root.removeEventListener('keydown', onKeydown); }
+    if (ACTIVE === api) { ACTIVE = null; S.menu = null; $('#tpop').innerHTML = ''; $('#bulk').innerHTML = ''; } root = null;
+  }
   const part = n => root && root.querySelector(`[data-part="${n}"]`);
   function render() {
     if (!root) return; compute();
@@ -1042,11 +1105,421 @@ function genericTable(item) {
 function tableFor(entity) { if (!TABLES[entity]) TABLES[entity] = genericTable(itemById(entity)); return TABLES[entity]; }
 
 /* =========================================================
+   COST REPORT (#/cost-report) — финансовый отчёт: себестоимость API на генерацию контента.
+   Сводная таблица: 2 уровня группировки (любые из 5 измерений) → проекты.
+   Факт = проект × модель × день; проект с несколькими моделями попадает в несколько групп
+   (провайдер / модель) своей частью расходов.
+   ========================================================= */
+const CR_TODAY = new Date(2026, 9, 16);
+const CR_TEXT_FROM = '2026-09-21', CR_IMG_FROM = '2026-09-29';
+const CR_MODELS = [
+  { model: 'gpt-5', provider: 'OpenAI', kind: 'text', price: .0062 },
+  { model: 'gpt-6.1-sol', provider: 'OpenAI', kind: 'text', price: .0088 },
+  { model: 'gpt-6-astra', provider: 'OpenAI', kind: 'text', price: .0131 },
+  { model: 'claude-sonnet-5', provider: 'TokenFlow', kind: 'text', price: .0352 },
+  { model: 'gemini-3-pro', provider: 'TokenFlow', kind: 'text', price: .0118 },
+  { model: 'gemini-3-flash', provider: 'Google', kind: 'text', price: .0024 },
+  { model: 'gpt-image-1', provider: 'OpenAI', kind: 'img', price: .0425 },
+  { model: 'imagen-4', provider: 'Google', kind: 'img', price: .0350 },
+];
+const CR_DIMS = {
+  team: { label: 'Команда', forms: ['команда', 'команды', 'команд'] },
+  owner: { label: 'Ответственный', forms: ['ответственный', 'ответственных', 'ответственных'] },
+  provider: { label: 'Провайдер', forms: ['провайдер', 'провайдера', 'провайдеров'] },
+  model: { label: 'Модель', forms: ['модель', 'модели', 'моделей'] },
+  template: { label: 'Шаблон', forms: ['шаблон', 'шаблона', 'шаблонов'] },
+};
+const CR_DIM_KEYS = Object.keys(CR_DIMS);
+const CR_PERIODS = [['today', 'Сегодня'], ['7d', '7 дней'], ['30d', '30 дней'], ['month', 'Этот месяц'], ['prev', 'Прошлый месяц'], ['all', 'Всё время']];
+const CR_COLS = [
+  { k: 'id', l: 'ID', w: 64, num: true },
+  { k: 'projects', l: 'Проектов', w: 86, num: true },
+  { k: 'fields', l: 'Полей', w: 78, num: true, t: 'Сгенерировано полей' },
+  { k: 'images', l: 'Картинок', w: 86, num: true },
+  { k: 'noPrice', l: 'Без цены', w: 84, num: true, t: 'Генерации без записанной цены (текст до 21.09, картинки до 29.09) — в сумму не входят' },
+  { k: 'errors', l: 'Ошибок', w: 76, num: true },
+  { k: 'text', l: 'Текст, $', w: 92, num: true },
+  { k: 'img', l: 'Картинки, $', w: 102, num: true },
+  { k: 'avg', l: 'На проект, $', w: 104, num: true, t: 'Средняя стоимость одного проекта в группе' },
+  { k: 'share', l: 'Доля', w: 136, num: true, t: 'Доля в расходах за период' },
+  { k: 'total', l: 'Итого, $', w: 98, num: true },
+  { k: 'team', l: 'Команда', w: 128 },
+  { k: 'owner', l: 'Ответственный', w: 128 },
+  { k: 'template', l: 'Шаблон', w: 136 },
+  { k: 'provider', l: 'Провайдер', w: 108 },
+  { k: 'model', l: 'Модель', w: 210 },
+  { k: 'first', l: 'Первая генерация', w: 162 },
+  { k: 'last', l: 'Последняя генерация', w: 170 },
+];
+const CR_LEAF_PAGE = 50;
+const crPlural = (n, f) => { const a = n % 100, b = n % 10; return f[a > 10 && a < 20 ? 2 : b === 1 ? 0 : b >= 2 && b <= 4 ? 1 : 2]; };
+const crMoney = n => '$' + n.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const crTs = s => s ? `${s.slice(8, 10)}.${s.slice(5, 7)}.${s.slice(0, 4)}, ${s.slice(11)}` : '';
+const crAddDays = (d, n) => new Date(d.getTime() + n * DAY);
+
+/* ---- демо-данные (свой генератор, чтобы не сдвигать данные лайаута) ---- */
+const CR_DATA = (() => {
+  let s = 20261016; const r = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+  const pk = a => a[Math.floor(r() * a.length)], ri = (a, b) => a + Math.floor(r() * (b - a + 1));
+  const M = Object.fromEntries(CR_MODELS.map(m => [m.model, m]));
+  const TEAMS = {
+    'Команда Димы': { owners: ['Александр С.', 'Сергей М.', 'Андрей Б.', 'Андрей Б.', 'Андрей С.'], tpl: ['Stitch-AI - tz-1', 'Stitch-AI - tz-1', 'Stitch-AI - tz-5', 'Stitch-AI-2 - tz-1', 'Stitch-AI-2 - tz-1'], text: ['gpt-6.1-sol', 'gpt-6.1-sol', 'gpt-5', 'claude-sonnet-5', 'gpt-6-astra'], w: .5 },
+    'Команда Кости': { owners: ['Юлия', 'Юлия', 'Bondarenko', 'D Kandyukin'], tpl: ['Дженерик', 'Дженерик', 'Дженерик', 'Моно'], text: ['gpt-5', 'gpt-5', 'gpt-6.1-sol', 'claude-sonnet-5', 'gemini-3-flash'], w: .25 },
+    'Команда Саши': { owners: ['Suyangulova Y', 'I Lapshin', 'I Lapshin'], tpl: ['Дженерик', 'Дженерик', 'Ревью'], text: ['claude-sonnet-5', 'claude-sonnet-5', 'gemini-3-pro', 'gpt-5', 'gemini-3-flash'], w: .25 },
+  };
+  const teamNames = Object.keys(TEAMS), facts = [], projects = [];
+  const pad = n => String(n).padStart(2, '0');
+  let bn = 1460, cid = 1270;
+  for (let i = 0; i < 640; i++) {
+    const x = r(), team = x < .5 ? teamNames[0] : x < .75 ? teamNames[1] : teamNames[2], T = TEAMS[team];
+    const L = LANGS[Math.floor(r() * LANGS.length)];
+    const id = cid--, name = team === teamNames[0] ? 'b-' + (bn--) : pk(L.names) + (r() < .45 ? ' - ' + ri(2, 24) : '');
+    const owner = pk(T.owners), template = pk(T.tpl);
+    const start = crAddDays(CR_TODAY, -ri(0, 75)), days = Math.min(ri(1, 4) + (r() < .25 ? ri(2, 9) : 0), Math.round((CR_TODAY - start) / DAY) + 1);
+    const tm = [pk(T.text)]; if (r() < .45) tm.push(pk(T.text.filter(m => m !== tm[0]))); if (r() < .12) tm.push('gemini-3-flash');
+    const models = [...new Set(tm)], img = template.startsWith('Stitch') || r() < .55 ? (r() < .8 ? 'gpt-image-1' : 'imagen-4') : null;
+    let fieldsTotal = ri(40, 330) + (r() < .15 ? ri(200, 900) : 0), imgTotal = img ? pk([2, 4, 4, 6, 8, 8, 52]) : 0;
+    const errRate = r() < .6 ? 0 : r() < .7 ? r() * .12 : r() * .45;
+    projects.push({ id, name, team, owner, template });
+    for (let d = 0; d < days; d++) {
+      const date = crAddDays(start, d), ds = iso(date), last = d === days - 1;
+      const fShare = last ? fieldsTotal : Math.round(fieldsTotal * (.3 + r() * .5)); fieldsTotal -= fShare;
+      const iShare = last ? imgTotal : Math.round(imgTotal * r()); imgTotal -= iShare;
+      const uses = models.map((m, k) => [m, k === 0 ? .55 + r() * .3 : r()]); const sum = uses.reduce((a, u) => a + u[1], 0);
+      const parts = [...uses.map(([m, w]) => [m, Math.round(fShare * w / sum)]), ...(img && iShare ? [[img, iShare]] : [])];
+      for (const [m, n] of parts) {
+        if (!n) continue; const mm = M[m], isText = mm.kind === 'text', priced = ds >= (isText ? CR_TEXT_FROM : CR_IMG_FROM);
+        const h = ri(0, 23), ts = `${ds} ${pad(h)}:${pad(ri(0, 59))}:${pad(ri(0, 59))}`, te = `${ds} ${pad(Math.min(23, h + ri(0, 3)))}:${pad(ri(0, 59))}:${pad(ri(0, 59))}`;
+        const cost = priced ? n * mm.price * (.85 + r() * .3) : 0;
+        facts.push({ pid: id, name, team, owner, template, provider: mm.provider, model: m, date: ds, t0: ts < te ? ts : te, t1: ts < te ? te : ts,
+          fields: isText ? n : 0, images: isText ? 0 : n, noPrice: priced ? 0 : n, errors: isText ? Math.round(n * errRate) : 0,
+          text: isText ? cost : 0, img: isText ? 0 : cost });
+      }
+    }
+  }
+  const dates = facts.map(f => f.date).sort();
+  return { facts, projects, minDate: dates[0], maxDate: dates[dates.length - 1] };
+})();
+
+/* ---- компонент ---- */
+const COST = (() => {
+  const SK = 'costreport.';
+  const S = {
+    period: '30d', from: null, to: null, g1: 'team', g2: 'provider', filters: {}, q: '',
+    sort: { key: 'total', dir: 'desc' }, open: new Set(), more: {}, menu: null, fsearch: '', hashRead: false,
+  };
+  Object.assign(S, store.get(SK + 'group', {}));
+  let root = null, R = null, qT;
+
+  function range() {
+    const t = iso(CR_TODAY), y = CR_TODAY.getFullYear(), m = CR_TODAY.getMonth();
+    switch (S.period) {
+      case 'today': return [t, t];
+      case '7d': return [iso(crAddDays(CR_TODAY, -6)), t];
+      case '30d': return [iso(crAddDays(CR_TODAY, -29)), t];
+      case 'month': return [iso(new Date(y, m, 1)), t];
+      case 'prev': return [iso(new Date(y, m - 1, 1)), iso(new Date(y, m, 0))];
+      case 'all': return [CR_DATA.minDate, t];
+      default: return [S.from || CR_DATA.minDate, S.to || t];
+    }
+  }
+  const dimVal = (f, k) => f[k];
+  function passFilters(f, except) {
+    for (const k of CR_DIM_KEYS) { if (k === except) continue; const v = S.filters[k]; if (v && v.length && !v.includes(f[k])) return false; }
+    return true;
+  }
+  function baseFacts(except) {
+    const [a, b] = range(), q = S.q.trim().toLowerCase();
+    return CR_DATA.facts.filter(f => f.date >= a && f.date <= b && passFilters(f, except) && (!q || f.name.toLowerCase().includes(q) || String(f.pid).includes(q)));
+  }
+  function agg(list) {
+    const a = { fields: 0, images: 0, noPrice: 0, errors: 0, text: 0, img: 0, first: null, last: null, pids: new Set(), vals: {}, mcount: {} };
+    for (const k of CR_DIM_KEYS) a.vals[k] = new Set();
+    for (const f of list) {
+      a.fields += f.fields; a.images += f.images; a.noPrice += f.noPrice; a.errors += f.errors; a.text += f.text; a.img += f.img; a.pids.add(f.pid);
+      if (!a.first || f.t0 < a.first) a.first = f.t0; if (!a.last || f.t1 > a.last) a.last = f.t1;
+      for (const k of CR_DIM_KEYS) a.vals[k].add(f[k]);
+      a.mcount[f.model] = (a.mcount[f.model] || 0) + f.fields + f.images;
+    }
+    a.total = a.text + a.img; a.projects = a.pids.size; a.avg = a.projects ? a.total / a.projects : 0;
+    return a;
+  }
+  function groupBy(list, k) { const m = new Map(); for (const f of list) { const v = k === 'pid' ? f.pid : dimVal(f, k); if (!m.has(v)) m.set(v, []); m.get(v).push(f); } return m; }
+  function sortVal(n, k) {
+    if (k === 'name') return n.label;
+    if (k === 'id') return n.id ?? -1;
+    if (CR_DIMS[k]) return [...n.a.vals[k]].sort().join(' ');
+    if (k === 'share') return n.a.total;
+    return n.a[k] ?? '';
+  }
+  function sortNodes(arr) {
+    const { key, dir } = S.sort, m = dir === 'asc' ? 1 : -1;
+    return arr.sort((x, y) => { const a = sortVal(x, key), b = sortVal(y, key); return (typeof a === 'number' && typeof b === 'number' ? a - b : String(a).localeCompare(String(b), 'ru')) * m || y.a.total - x.a.total; });
+  }
+  function leaves(list) { return sortNodes([...groupBy(list, 'pid')].map(([pid, fs]) => ({ kind: 'leaf', id: pid, label: fs[0].name, a: agg(fs) }))); }
+  function compute() {
+    const facts = baseFacts(); const total = agg(facts);
+    const tree = sortNodes([...groupBy(facts, S.g1)].map(([v, fs]) => {
+      const path = String(v), node = { kind: 'g1', path, label: v, a: agg(fs) };
+      node.children = S.g2 ? sortNodes([...groupBy(fs, S.g2)].map(([v2, fs2]) => ({ kind: 'g2', path: path + '|' + v2, label: v2, a: agg(fs2), facts: fs2 }))) : null;
+      node.facts = fs; return node;
+    }));
+    R = { facts, total, tree };
+  }
+  const hiddenCols = () => new Set([S.g1, S.g2].filter(Boolean));
+  const cols = () => CR_COLS.filter(c => !hiddenCols().has(c.k));
+
+  /* ---- url ---- */
+  function writeHash() {
+    const p = new URLSearchParams();
+    if (S.period !== '30d') p.set('period', S.period === 'custom' ? `${S.from}..${S.to}` : S.period);
+    p.set('group', S.g1 + (S.g2 ? ',' + S.g2 : ''));
+    for (const k of CR_DIM_KEYS) if (S.filters[k] && S.filters[k].length) p.set('f.' + k, S.filters[k].join('|'));
+    if (S.q) p.set('q', S.q);
+    if (S.sort.key !== 'total' || S.sort.dir !== 'desc') p.set('sort', S.sort.key + ':' + S.sort.dir);
+    try { history.replaceState(null, '', '#/cost-report?' + p.toString().replace(/%2C/g, ',').replace(/%7C/g, '|')); } catch (e) {}
+  }
+  function readHash() {
+    S.hashRead = true; const h = location.hash; if (!h.startsWith('#/cost-report')) return;
+    const p = new URLSearchParams(h.split('?')[1] || '');
+    const per = p.get('period');
+    if (per) { if (per.includes('..')) { [S.from, S.to] = per.split('..'); S.period = 'custom'; } else if (CR_PERIODS.some(x => x[0] === per)) S.period = per; }
+    const g = (p.get('group') || '').split(',').filter(k => CR_DIMS[k]); if (g[0]) { S.g1 = g[0]; S.g2 = g[1] && g[1] !== g[0] ? g[1] : null; }
+    for (const k of CR_DIM_KEYS) if (p.get('f.' + k)) S.filters[k] = p.get('f.' + k).split('|');
+    if (p.get('q')) S.q = p.get('q');
+    if (p.get('sort')) { const [k, d] = p.get('sort').split(':'); if (k === 'name' || CR_COLS.some(c => c.k === k)) S.sort = { key: k, dir: d === 'asc' ? 'asc' : 'desc' }; }
+  }
+  const saveGroup = () => store.set(SK + 'group', { g1: S.g1, g2: S.g2 });
+
+  /* ---- render ---- */
+  function mount(container) {
+    if (!S.hashRead) readHash();
+    root = container; ACTIVE = api;
+    root.innerHTML = `<div class="page-head cr-head"><h1>Финансовый отчёт</h1><div class="seg" data-crpart="periods"></div>
+        <div class="cr-dates"><input type="date" data-crdate="from"><span>—</span><input type="date" data-crdate="to"></div>
+        <div class="spacer"></div><button class="btn" data-crexport>${I.dl} Скачать CSV</button></div>
+      <p class="cr-note">Расход на генерацию контента — прикидка по токенам (ориентир, не счёт поставщика). Цена текста записывается с 21.09.2026 — более ранние генерации в сумму не входят (видны в столбце «Без цены»), картинок (логотипы, фавиконы, изображения блоков) — с 29.09.2026.</p>
+      <div class="kpis cr-kpis" data-crpart="kpis"></div>
+      <div class="card"><div class="cr-bar" data-crpart="bar"></div><div class="dt cr-dt" data-crpart="table"></div></div>`;
+    root.addEventListener('click', onClick); root.addEventListener('change', onChange); root.addEventListener('input', onInput); root.addEventListener('keydown', onKeydown);
+    root.querySelector('[data-crpart="table"]').addEventListener('scroll', e => e.target.classList.toggle('scrolled', e.target.scrollLeft > 0));
+    render();
+  }
+  function unmount() {
+    if (root) { root.removeEventListener('click', onClick); root.removeEventListener('change', onChange); root.removeEventListener('input', onInput); root.removeEventListener('keydown', onKeydown); }
+    if (ACTIVE === api) { ACTIVE = null; S.menu = null; $('#tpop').innerHTML = ''; }
+    root = null;
+    if (location.hash.startsWith('#/cost-report')) try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+  }
+  const part = n => root && root.querySelector(`[data-crpart="${n}"]`);
+  function render() {
+    if (!root) return; compute();
+    renderHead(); renderKpis(); renderBar(); renderTable(); renderMenu(); writeHash();
+  }
+  function renderHead() {
+    part('periods').innerHTML = CR_PERIODS.map(([id, l]) => `<button class="${S.period === id ? 'on' : ''}" data-crperiod="${id}">${l}</button>`).join('');
+    const [a, b] = range(); const fi = root.querySelector('[data-crdate="from"]'), ti = root.querySelector('[data-crdate="to"]');
+    fi.value = a; ti.value = b; fi.max = b; ti.min = a; ti.max = iso(CR_TODAY);
+  }
+  function renderKpis() {
+    const t = R.total, all = new Set(CR_DATA.projects.map(p => p.id)).size;
+    const per = [...groupBy(R.facts, 'pid').values()].map(fs => fs.reduce((s, f) => s + f.text + f.img, 0)).sort((x, y) => x - y);
+    const med = per.length ? per[Math.floor(per.length / 2)] : 0, max = per.length ? per[per.length - 1] : 0;
+    const withErr = new Set(R.facts.filter(f => f.errors).map(f => f.pid)).size;
+    part('kpis').innerHTML = `
+      <div class="kpi"><div class="l">Потрачено за период</div><div class="v">${crMoney(t.total)}</div>
+        <div class="s">текст ${crMoney(t.text)} · картинки ${crMoney(t.img)}</div><div class="s">полей ${fmtNum(t.fields)} · картинок ${fmtNum(t.images)} · без цены ${fmtNum(t.noPrice)}</div></div>
+      <div class="kpi"><div class="l">Средняя стоимость 1 проекта</div><div class="v">${crMoney(t.avg)}</div>
+        <div class="s">медиана ${crMoney(med)} · максимум ${crMoney(max)}</div><div class="s">по проектам с генерациями за период</div></div>
+      <div class="kpi"><div class="l">Всего проектов</div><div class="v">${fmtNum(t.projects)}</div>
+        <div class="s">с генерациями за период · всего в системе ${fmtNum(all)}</div><div class="s">${withErr ? `с ошибками генерации: <b class="cr-err">${fmtNum(withErr)}</b>` : 'без ошибок генерации'}</div></div>`;
+  }
+  function renderBar() {
+    const fBtn = k => { const v = S.filters[k], on = v && v.length; return `<button class="btn cr-f ${on ? 'on' : ''}" data-crmenu="filter" data-key="${k}">${CR_DIMS[k].label}: <b>${on ? (v.length === 1 ? esc(v[0]) : v.length + ' ' + crPlural(v.length, ['значение', 'значения', 'значений'])) : 'все'}</b>${I.chev}</button>`; };
+    const anyF = CR_DIM_KEYS.some(k => S.filters[k] && S.filters[k].length) || S.q;
+    const allOpen = R.tree.length && R.tree.every(n => S.open.has(n.path));
+    part('bar').innerHTML = `
+      <div class="cr-group"><span class="cr-lbl">Группировка</span>
+        <button class="btn cr-g" data-crmenu="group" data-key="1"><span class="cr-n">1</span>${CR_DIMS[S.g1].label}${I.chev}</button>
+        <span class="cr-sep">›</span>
+        <button class="btn cr-g ${S.g2 ? '' : 'empty'}" data-crmenu="group" data-key="2"><span class="cr-n">2</span>${S.g2 ? CR_DIMS[S.g2].label : 'нет'}${I.chev}</button>
+        <span class="cr-sep">›</span><span class="cr-leaf">Проекты</span></div>
+      <span class="cr-vsep"></span>
+      <label class="tsearch cr-search">${I.search}<input class="cr-q" type="search" placeholder="Проект или ID…" value="${esc(S.q)}" autocomplete="off">${S.q ? `<button class="iconbtn" data-crclearq title="Очистить">${I.xs}</button>` : '<span class="kbd">/</span>'}</label>
+      ${CR_DIM_KEYS.map(fBtn).join('')}
+      ${anyF ? `<button class="cr-reset" data-crreset>${I.reset} Сбросить</button>` : ''}
+      <div class="spacer"></div>
+      <button class="btn icon" data-crexpand title="${allOpen ? 'Свернуть все группы' : 'Развернуть все группы'}">${allOpen ? CR_I.collapse : CR_I.expand}</button>`;
+  }
+  function dimCell(n, k) {
+    const vals = [...n.a.vals[k]];
+    if (k === 'model') {
+      if (n.kind === 'leaf' || vals.length === 1) { const list = Object.entries(n.a.mcount).sort((x, y) => y[1] - x[1]); const txt = list.map(([m, c]) => m + ' ' + c).join(' · ');
+        return `<td title="${esc(txt)}">${n.kind === 'leaf' ? list.map(([m, c]) => `${esc(m)} <span class="id">${fmtNum(c)}</span>`).join('<span class="dash"> · </span>') : esc(vals[0])}</td>`; }
+    }
+    if (vals.length === 1) return `<td title="${esc(vals[0])}">${esc(vals[0])}</td>`;
+    if (n.kind === 'leaf') return `<td title="${esc(vals.join(' · '))}">${esc(vals.join(' · '))}</td>`;
+    return `<td><span class="cr-many" title="${esc(vals.sort().join('\n'))}">${vals.length} ${crPlural(vals.length, CR_DIMS[k].forms)}</span></td>`;
+  }
+  function cell(n, c) {
+    const a = n.a, z = v => v ? fmtNum(v) : '<span class="dash">0</span>';
+    switch (c.k) {
+      case 'id': return `<td class="num id">${n.kind === 'leaf' ? n.id : ''}</td>`;
+      case 'projects': return `<td class="num">${n.kind === 'leaf' ? '' : fmtNum(a.projects)}</td>`;
+      case 'fields': return `<td class="num">${z(a.fields)}</td>`;
+      case 'images': return `<td class="num">${z(a.images)}</td>`;
+      case 'noPrice': return `<td class="num">${a.noPrice ? `<span class="cr-np">${fmtNum(a.noPrice)}</span>` : '<span class="dash">0</span>'}</td>`;
+      case 'errors': return `<td class="num">${a.errors ? `<span class="cr-err">${fmtNum(a.errors)}</span>` : '<span class="dash">0</span>'}</td>`;
+      case 'text': return `<td class="num">${crMoney(a.text)}</td>`;
+      case 'img': return `<td class="num">${crMoney(a.img)}</td>`;
+      case 'avg': return `<td class="num">${n.kind === 'leaf' ? '' : crMoney(a.avg)}</td>`;
+      case 'share': { const p = R.total.total ? a.total / R.total.total * 100 : 0; return `<td class="num"><span class="cr-share"><span class="cr-sb"><i style="width:${Math.min(100, p).toFixed(1)}%"></i></span>${p.toLocaleString('ru-RU', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %</span></td>`; }
+      case 'total': return `<td class="num cr-total">${crMoney(a.total)}</td>`;
+      case 'first': return `<td class="id">${crTs(a.first)}</td>`;
+      case 'last': return `<td class="id">${crTs(a.last)}</td>`;
+      default: return dimCell(n, c.k);
+    }
+  }
+  function row(n, depth, cs) {
+    const isG = n.kind !== 'leaf', open = isG && S.open.has(n.path);
+    const name = isG
+      ? `<button class="cr-tg" data-crtoggle="${esc(n.path)}" aria-expanded="${open}">${I.chev}</button><span class="cr-gl">${esc(n.label)}</span>`
+      : `<span class="cr-pn link" title="${esc(n.label)}">${esc(n.label)}</span>`;
+    return `<tr class="cr-${n.kind}${open ? ' open' : ''}"${isG ? ` data-crrow="${esc(n.path)}"` : ''}><td class="cr-name pinned pinned-last" style="left:0"><div class="cr-in" style="padding-left:${depth * 22}px">${name}</div></td>${cs.map(c => cell(n, c)).join('')}</tr>`;
+  }
+  function leafRows(n, depth, cs) {
+    const ls = leaves(n.facts), shown = S.more[n.path] || CR_LEAF_PAGE;
+    let h = ls.slice(0, shown).map(l => row(l, depth, cs)).join('');
+    if (ls.length > shown) h += `<tr class="cr-more"><td class="pinned pinned-last" style="left:0"><div class="cr-in" style="padding-left:${depth * 22}px"><button class="link cr-mb" data-crmore="${esc(n.path)}">Показать ещё ${Math.min(CR_LEAF_PAGE, ls.length - shown)} из ${ls.length - shown}</button></div></td><td colspan="${cs.length}"></td></tr>`;
+    return h;
+  }
+  function renderTable() {
+    const cs = cols(), sortTh = (k, l, num, t) => { const on = S.sort.key === k; return `<th class="${num ? 'num ' : ''}${on ? 'sorted' : ''}" data-crsort="${k}"${t ? ` title="${esc(t)}"` : ''}><div class="thc"><span class="thl">${esc(l)}<span class="sarr ${on ? '' : 'ghost'}">${on && S.sort.dir === 'asc' ? I.up : I.down}</span></span></div></th>`; };
+    const tl = [CR_DIMS[S.g1].label, S.g2 && CR_DIMS[S.g2].label, 'Проект'].filter(Boolean).join(' › ');
+    const head = `<tr>${sortTh('name', tl, false).replace('<th class="', '<th class="pinned pinned-last cr-name ').replace('data-crsort', 'style="left:0" data-crsort')}${cs.map(c => sortTh(c.k, c.l, c.num, c.t)).join('')}</tr>`;
+    let body = '';
+    for (const g of R.tree) {
+      body += row(g, 0, cs);
+      if (!S.open.has(g.path)) continue;
+      if (g.children) for (const g2 of g.children) { body += row(g2, 1, cs); if (S.open.has(g2.path)) body += leafRows(g2, 2, cs); }
+      else body += leafRows(g, 1, cs);
+    }
+    const tot = { kind: 'total', label: 'Итого', a: R.total };
+    const foot = R.tree.length ? `<tr><td class="cr-name pinned pinned-last" style="left:0"><div class="cr-in">Итого <span class="id">· ${fmtNum(R.total.projects)} ${crPlural(R.total.projects, ['проект', 'проекта', 'проектов'])}</span></div></td>${cs.map(c => CR_DIMS[c.k] ? dimCell(tot, c.k) : cell(tot, c)).join('')}</tr>` : '';
+    const width = 300 + cs.reduce((s, c) => s + c.w, 0);
+    part('table').innerHTML = R.tree.length
+      ? `<table style="width:${width}px"><colgroup><col style="width:300px">${cs.map(c => `<col style="width:${c.w}px">`).join('')}</colgroup><thead>${head}</thead><tbody>${body}</tbody><tfoot>${foot}</tfoot></table>`
+      : `<div class="empty"><b>Нет генераций</b>За выбранный период и фильтры расходов нет. <button class="link cr-mb" data-crreset>Сбросить фильтры</button></div>`;
+  }
+
+  /* ---- popovers ---- */
+  function openMenu(kind, key, anchor) { S.menu = { kind, key, anchor }; S.fsearch = ''; renderMenu(); renderBarState(); }
+  function closeMenu() { if (!S.menu) return; S.menu = null; renderMenu(); renderBarState(); }
+  function renderBarState() { root && root.querySelectorAll('[data-crmenu]').forEach(b => b.classList.toggle('menu-open', !!S.menu && S.menu.kind === b.dataset.crmenu && S.menu.key === b.dataset.key)); }
+  function renderMenu() {
+    const el = $('#tpop'); if (!S.menu || ACTIVE !== api) { el.innerHTML = ''; return; }
+    const { kind, key } = S.menu; let anchor = S.menu.anchor;
+    if (!document.body.contains(anchor)) { anchor = root.querySelector(`[data-crmenu="${kind}"][data-key="${key}"]`); if (!anchor) { S.menu = null; el.innerHTML = ''; return; } S.menu.anchor = anchor; }
+    el.innerHTML = `<div class="tpop" role="menu">${kind === 'group' ? groupMenu(key) : filterMenu(key)}</div>`;
+    const pop = el.firstElementChild, r = anchor.getBoundingClientRect(); pop.style.top = (r.bottom + 6) + 'px';
+    pop.style.left = Math.max(8, Math.min(r.left, window.innerWidth - pop.offsetWidth - 8)) + 'px';
+    const fs = pop.querySelector('.fsearch'); if (fs && S.menu.focusSearch) { fs.focus(); fs.setSelectionRange(fs.value.length, fs.value.length); }
+    renderBarState();
+  }
+  function groupMenu(level) {
+    const cur = level === '1' ? S.g1 : S.g2, other = level === '1' ? S.g2 : S.g1;
+    return `<div class="ph">${level === '1' ? 'Первый уровень' : 'Второй уровень'}</div>` +
+      CR_DIM_KEYS.map(k => { const swap = k === other && cur; if (k === other && !cur) return `<button class="pi" disabled style="color:var(--muted)">${CR_DIMS[k].label}<span class="k">уже 1-й уровень</span></button>`;
+        return `<button class="pi ${cur === k ? 'on' : ''}" data-crgroup="${level}:${k}">${CR_DIMS[k].label}${swap ? '<span class="k">поменять уровни местами</span>' : cur === k ? `<span class="k">${I.check}</span>` : ''}</button>`; }).join('') +
+      (level === '2' ? `<hr><button class="pi ${!S.g2 ? 'on' : ''}" data-crgroup="2:">Без 2-го уровня</button>` : '');
+  }
+  function filterMenu(k) {
+    const counts = new Map(); for (const f of baseFacts(k)) { if (!counts.has(f[k])) counts.set(f[k], new Set()); counts.get(f[k]).add(f.pid); }
+    const allVals = [...new Set(CR_DATA.facts.map(f => f[k]))].sort((a, b) => (counts.get(b)?.size || 0) - (counts.get(a)?.size || 0) || String(a).localeCompare(b, 'ru'));
+    const sel = S.filters[k] && S.filters[k].length ? S.filters[k] : null, q = S.fsearch.trim().toLowerCase();
+    const list = allVals.filter(v => !q || String(v).toLowerCase().includes(q));
+    return `<div class="ph"><span>${CR_DIMS[k].label}</span>${sel ? `<button class="link" data-crfclear="${k}">Сбросить</button>` : ''}</div>
+      ${allVals.length > 8 ? `<input class="fsearch" data-crfsearch placeholder="Найти…" value="${esc(S.fsearch)}">` : ''}
+      <div class="flist">${list.map(v => { const c = counts.get(v)?.size || 0; return `<label class="${c ? '' : 'zero'}"><input type="checkbox" data-crfval="${k}" value="${esc(v)}" ${sel && sel.includes(v) ? 'checked' : ''}><span class="v">${hl(v, q)}</span><span class="c">${fmtNum(c)}</span></label>`; }).join('') || '<div class="note">Ничего не найдено</div>'}</div>
+      <div class="note">Число — проектов с генерациями за период. Ничего не отмечено = все.</div>`;
+  }
+
+  /* ---- export ---- */
+  function doExport() {
+    const cs = cols(), lines = [];
+    const val = (n, c) => { const a = n.a; if (CR_DIMS[c.k]) return n.kind === 'leaf' && c.k === 'model' ? Object.entries(a.mcount).map(([m, x]) => m + ' ' + x).join(' · ') : [...a.vals[c.k]].sort().join(' · ');
+      if (c.k === 'id') return n.id ?? ''; if (c.k === 'share') return R.total.total ? (a.total / R.total.total * 100).toFixed(1) : '0';
+      if (['text', 'img', 'avg', 'total'].includes(c.k)) return a[c.k].toFixed(2); if (c.k === 'first' || c.k === 'last') return a[c.k] || ''; if (c.k === 'projects' && n.kind === 'leaf') return ''; return a[c.k]; };
+    const levels = [CR_DIMS[S.g1].label, S.g2 && CR_DIMS[S.g2].label].filter(Boolean);
+    lines.push(['Уровень', ...levels, 'Проект', ...cs.map(c => c.t || c.l)]);
+    const push = (n, path, lvl) => lines.push([lvl, ...levels.map((_, i) => path[i] ?? ''), n.kind === 'leaf' ? n.label : '', ...cs.map(c => val(n, c))]);
+    for (const g of R.tree) {
+      push(g, [g.label], 1);
+      if (g.children) for (const g2 of g.children) { push(g2, [g.label, g2.label], 2); for (const l of leaves(g2.facts)) push(l, [g.label, g2.label], 3); }
+      else for (const l of leaves(g.facts)) push(l, [g.label], 2);
+    }
+    lines.push(['Итого', ...levels.map(() => ''), '', ...cs.map(c => val({ kind: 'total', a: R.total }, c))]);
+    const csv = '﻿' + lines.map(r => r.map(v => { v = String(v ?? ''); return /[;"\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(';')).join('\n');
+    const [a, b] = range(), url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })), lnk = document.createElement('a');
+    lnk.href = url; lnk.download = `cost-report_${a}_${b}.csv`; document.body.appendChild(lnk); lnk.click(); lnk.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast(`Выгружено ${fmtNum(lines.length - 2)} строк: группы и проекты с учётом фильтров`);
+  }
+
+  /* ---- events ---- */
+  function onClick(e) {
+    const t = e.target, c = s => t.closest(s);
+    const mb = c('[data-crmenu]'); if (mb) { e.stopPropagation(); const { crmenu: kind, key } = mb.dataset; if (S.menu && S.menu.kind === kind && S.menu.key === key) return closeMenu(); return openMenu(kind, key, mb); }
+    const per = c('[data-crperiod]'); if (per) { S.period = per.dataset.crperiod; S.more = {}; return render(); }
+    const tg = c('[data-crtoggle]') || (!c('button,a,input,.cr-pn') && c('[data-crrow]'));
+    if (tg) { const p = tg.dataset.crtoggle ?? tg.dataset.crrow; S.open.has(p) ? S.open.delete(p) : S.open.add(p); return render(); }
+    const mr = c('[data-crmore]'); if (mr) { const p = mr.dataset.crmore; S.more[p] = (S.more[p] || CR_LEAF_PAGE) + CR_LEAF_PAGE; return render(); }
+    const srt = c('[data-crsort]'); if (srt) { const k = srt.dataset.crsort, txt = k === 'name' || k === 'first' || k === 'last' || CR_DIMS[k]; S.sort = S.sort.key === k ? { key: k, dir: S.sort.dir === 'asc' ? 'desc' : 'asc' } : { key: k, dir: txt ? 'asc' : 'desc' }; return render(); }
+    if (c('[data-crexpand]')) {
+      const allOpen = R.tree.every(n => S.open.has(n.path));
+      if (allOpen) S.open.clear(); else for (const g of R.tree) { S.open.add(g.path); if (g.children) g.children.forEach(x => S.open.add(x.path)); }
+      return render();
+    }
+    if (c('[data-crclearq]')) { S.q = ''; return render(); }
+    if (c('[data-crreset]')) { S.filters = {}; S.q = ''; S.menu = null; return render(); }
+    if (c('[data-crexport]')) return doExport();
+    const gr = c('[data-crgroup]'); if (gr) {
+      const [lvl, k] = gr.dataset.crgroup.split(':');
+      if (lvl === '1') { if (k === S.g2) S.g2 = S.g1; S.g1 = k; } else if (!k) S.g2 = null; else if (k === S.g1) { if (S.g2) { S.g1 = S.g2; S.g2 = k; } } else S.g2 = k;
+      if (S.g1 === S.g2) S.g2 = null;
+      S.open.clear(); S.more = {}; S.menu = null; saveGroup(); return render();
+    }
+    const fc = c('[data-crfclear]'); if (fc) { delete S.filters[fc.dataset.crfclear]; S.more = {}; return render(); }
+    if (c('.cr-pn')) return toast('Переход в проект — в реальной CRM откроется карточка проекта');
+  }
+  function onChange(e) {
+    const t = e.target, d = t.dataset;
+    if (d.crfval) { const k = d.crfval, cur = new Set(S.filters[k] || []); t.checked ? cur.add(t.value) : cur.delete(t.value); S.filters[k] = [...cur]; if (!cur.size) delete S.filters[k]; S.more = {}; return render(); }
+    if (d.crdate) { const [a, b] = range(); S.from = d.crdate === 'from' ? (t.value || a) : a; S.to = d.crdate === 'to' ? (t.value || b) : b; if (S.from > S.to) [S.from, S.to] = [S.to, S.from]; S.period = 'custom'; S.more = {}; return render(); }
+  }
+  function onInput(e) {
+    const t = e.target;
+    if (t.classList.contains('cr-q')) { clearTimeout(qT); qT = setTimeout(() => {
+      S.q = t.value; S.more = {};
+      if (S.q.trim()) { compute(); S.open.clear(); for (const g of R.tree) { S.open.add(g.path); if (g.children) g.children.forEach(x => S.open.add(x.path)); } }
+      const pos = t.selectionStart; render(); const q = root.querySelector('.cr-q'); q.focus(); q.setSelectionRange(pos, pos); }, 180); }
+    if (t.dataset.crfsearch != null) { S.fsearch = t.value; S.menu.focusSearch = true; renderMenu(); }
+  }
+  function onKeydown(e) { if (e.key === 'Escape' && e.target.classList.contains('cr-q') && S.q) { S.q = ''; render(); root.querySelector('.cr-q').focus(); } }
+  const api = { key: 'cost-report', mount, unmount, render, onClick, onChange, onInput, onKeydown, closeMenu, hasMenu: () => !!S.menu,
+    focusSearch: () => { const q = root && root.querySelector('.cr-q'); if (q) q.focus(); } };
+  return api;
+})();
+const CR_I = {
+  expand: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6l3-3 3 3M5 10l3 3 3-3"/></svg>',
+  collapse: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l3 3 3-3M5 13l3-3 3 3"/></svg>',
+};
+
+/* =========================================================
    LAYOUT STATE + RENDER
    ========================================================= */
 const state = {
   view: 'list', entity: 'projects', project: null, tab: 'overview',
-  starred: new Set(store.get('starred', DEFAULT_STARS)), collapsed: new Set(), sideCollapsed: store.get('sideCollapsed', false), railOpen: null,
+  starred: new Set(store.get('starred.v2', null) || [...store.get('starred', DEFAULT_STARS), 'cost-report']), collapsed: new Set(), sideCollapsed: store.get('sideCollapsed', false), railOpen: null,
   team: TEAMS[0], megaOpen: false, teamOpen: false, userOpen: false, moreOpen: false, psOpen: false, psQuery: '', psHl: 0,
 };
 function go(patch) { Object.assign(state, patch); render(); }
@@ -1137,8 +1610,9 @@ function renderProject() {
 }
 function renderMain() {
   const m = $('#main');
-  if (state.view === 'project' && state.project) { if (ACTIVE) ACTIVE.unmount(); m.innerHTML = renderProject(); }
-  else { const t = tableFor(state.entity); if (ACTIVE && ACTIVE !== t) ACTIVE.unmount(); m.innerHTML = ''; t.mount(m); }
+  if (state.view === 'project' && state.project) { if (ACTIVE) ACTIVE.unmount(); COST.unmount(); m.innerHTML = renderProject(); }
+  else if (state.entity === 'cost-report') { if (ACTIVE && ACTIVE !== COST) ACTIVE.unmount(); COST.mount(m); }
+  else { const t = tableFor(state.entity); if (ACTIVE && ACTIVE !== t) ACTIVE.unmount(); if (COST !== ACTIVE) COST.unmount(); m.innerHTML = ''; t.mount(m); }
 }
 function render() { renderTopnav(); renderMega(); renderSelector(); renderTeam(); renderUser(); renderSide(); renderMain(); renderMorePop(); }
 
@@ -1157,7 +1631,7 @@ document.addEventListener('click', e => {
   if (c('#teamBtn')) return go({ ...closeAll('team'), teamOpen: !state.teamOpen });
   if (c('#userBtn')) return go({ ...closeAll('user'), userOpen: !state.userOpen });
   if (c('#moreBtn') && !c('[data-nav]')) return go({ ...closeAll('more'), moreOpen: !state.moreOpen });
-  const star = c('[data-star]'); if (star) { e.stopPropagation(); const id = star.dataset.star; state.starred.has(id) ? state.starred.delete(id) : state.starred.add(id); store.set('starred', [...state.starred]); return render(); }
+  const star = c('[data-star]'); if (star) { e.stopPropagation(); const id = star.dataset.star; state.starred.has(id) ? state.starred.delete(id) : state.starred.add(id); store.set('starred.v2', [...state.starred]); return render(); }
   const team = c('[data-team]'); if (team) return go({ ...closeAll(), team: team.dataset.team });
   const nav = c('[data-nav]'); if (nav) { window.scrollTo({ top: 0 }); return go({ ...closeAll(), view: 'list', entity: nav.dataset.nav }); }
   const tab = c('[data-tab]'); if (tab) return go({ ...closeAll(), tab: tab.dataset.tab, railOpen: null });
@@ -1185,6 +1659,7 @@ document.addEventListener('keydown', e => {
 });
 function scrollHl() { const el = document.querySelector('.pitem.hl'); if (el) el.scrollIntoView({ block: 'nearest' }); }
 new ResizeObserver(() => layoutNav()).observe($('#topnav'));
+if (location.hash.startsWith('#/cost-report')) state.entity = 'cost-report';
 render();
 </script>
 

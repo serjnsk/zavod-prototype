@@ -399,6 +399,41 @@ tr.open .cr-tg svg{transform:none}
 .cr-dt tfoot td.pinned{z-index:3}
 .cr-dt tfoot .cr-many{font-weight:400}
 .cr-none{color:var(--muted);font-weight:400}
+.cr-chart{margin-bottom:12px;overflow:visible}
+.cr-ch-head{display:flex;align-items:center;gap:10px;padding:8px 12px;flex-wrap:wrap}
+.cr-chart:not(.closed) .cr-ch-head{border-bottom:1px solid #eef0f3}
+.cr-ch-title{display:flex;align-items:center;gap:6px;border:0;background:none;padding:4px 6px 4px 2px;border-radius:6px;color:var(--text);font-size:13px}
+.cr-ch-title:hover{background:var(--hover)}
+.cr-ch-title svg{color:var(--muted);transition:transform .15s}
+.cr-chart.closed .cr-ch-title svg{transform:rotate(-90deg)}
+.cr-ch-title b{font-weight:600}
+.cr-ch-by,.cr-ch-step{color:var(--muted);font-size:12px}
+.cr-chart.closed .cr-ch-step{display:none}
+.cr-ch-body{position:relative;padding:10px 12px 0}
+.cr-ch-plot{min-height:220px}
+.cr-ch-plot svg{display:block;overflow:visible}
+.cr-ch-plot .gl{stroke:#eef0f3;stroke-width:1}
+.cr-ch-plot .bl{stroke:#d6dae1;stroke-width:1}
+.cr-ch-plot .yl{font-size:11px;fill:var(--muted);text-anchor:end;font-variant-numeric:tabular-nums}
+.cr-ch-plot .xl{font-size:11px;fill:var(--muted);text-anchor:middle}
+.cr-ch-plot .hit{fill:transparent;cursor:pointer}
+.cr-ch-plot .hit.on{fill:rgba(17,24,39,.04)}
+.cr-ch-tip{position:absolute;z-index:5;min-width:200px;max-width:280px;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow);padding:8px 10px;font-size:12px;pointer-events:none}
+.cr-ch-tip .th{display:flex;justify-content:space-between;gap:12px;padding-bottom:6px;margin-bottom:4px;border-bottom:1px solid #eef0f3;color:var(--text-2)}
+.cr-ch-tip .th b{color:var(--text);font-variant-numeric:tabular-nums}
+.cr-ch-tip .tr{display:flex;align-items:center;gap:8px;padding:2px 0;color:var(--text-2)}
+.cr-ch-tip .tr span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cr-ch-tip .tr b{font-weight:500;color:var(--text);font-variant-numeric:tabular-nums}
+.cr-ch-tip i,.cr-lg i,.cr-dot{width:10px;height:10px;border-radius:3px;flex:none;display:inline-block}
+.cr-ch-tip .tf{margin-top:6px;padding-top:6px;border-top:1px solid #eef0f3;color:var(--muted);font-size:11px}
+.cr-ch-leg{display:flex;flex-wrap:wrap;gap:2px 4px;padding:6px 10px 10px 60px}
+.cr-lg{display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:3px 6px;border-radius:6px;font-size:12px;color:var(--text-2)}
+.cr-lg:hover{background:var(--hover)}
+.cr-lg.off{color:#b3b9c4}
+.cr-lg.off i{background:#e5e7eb!important}
+.cr-ch-note{padding:0 12px 10px 66px;color:var(--muted);font-size:11.5px}
+.cr-ch-empty{color:var(--muted);font-size:12px}
+.cr-dot{margin-right:2px}
 .cr-slash{color:#c0c5cd;font-weight:400}
 .cr-kpis .v.cr-top{font-size:17px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cr-kpis .v.cr-top .cr-pn{display:inline;padding:0;color:var(--text)}
@@ -1225,6 +1260,24 @@ const PV_I = {
 const pvPct = p => p.toLocaleString('ru-RU', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' %';
 const pvShareCell = p => `<td class="num"><span class="cr-share"><span class="cr-sb"><i style="width:${Math.min(100, p).toFixed(1)}%"></i></span>${pvPct(p)}</span></td>`;
 
+const PV_COLORS = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300'], PV_OTHER = '#b8bec8';
+const PV_MON = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+const PV_MON1 = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+const pvDnum = s => Math.round(Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10)) / DAY);
+const pvDate = n => new Date(n * DAY);
+const pvIso = n => pvDate(n).toISOString().slice(0, 10);
+const pvDayLbl = n => { const d = pvDate(n); return d.getUTCDate() + ' ' + PV_MON[d.getUTCMonth()]; };
+function pvShort(v, money) {
+  const a = Math.abs(v), f = (x, d) => x.toLocaleString('ru-RU', { maximumFractionDigits: d });
+  const t = a >= 1e6 ? f(v / 1e6, a >= 1e7 ? 0 : 1) + ' млн' : a >= 1e4 ? f(v / 1e3, 0) + ' тыс' : money && a < 100 ? f(v, a < 10 ? 2 : 1) : f(v, 0);
+  return money ? '$' + t : t;
+}
+function pvNiceMax(max) {
+  if (max <= 0) return { top: 1, step: .25 };
+  const raw = max / 4, p = Math.pow(10, Math.floor(Math.log10(raw))), m = [1, 2, 2.5, 5, 10].find(x => x * p >= raw) * p;
+  return { top: Math.ceil(max / m) * m, step: m };
+}
+
 function makePivot(cfg) {
   const SK = 'pivot.' + cfg.key + '.', DIMS = cfg.dims, GK = cfg.groupKeys;
   const COLS = cfg.cols, COLMAP = Object.fromEntries(COLS.map(c => [c.k, c])), ATTR = COLS.filter(c => c.attr).map(c => c.k);
@@ -1238,6 +1291,17 @@ function makePivot(cfg) {
   S.profile.order = S.profile.order.filter(k => COLMAP[k]); for (const c of COLS) if (!S.profile.order.includes(c.k)) S.profile.order.push(c.k);
   const saveProfile = () => store.set(SK + 'profile', { order: S.profile.order, hidden: S.profile.hidden });
   const saveGroup = () => store.set(SK + 'group', { g1: S.g1, g2: S.g2 });
+  S.chart = Object.assign({ open: true, metric: cfg.chart.metrics[0].k }, store.get(SK + 'chart', {}), { hidden: new Set() });
+  if (!cfg.chart.metrics.some(m => m.k === S.chart.metric)) S.chart.metric = cfg.chart.metrics[0].k;
+  const saveChart = () => store.set(SK + 'chart', { open: S.chart.open, metric: S.chart.metric });
+  // цвет закреплён за значением измерения (не за местом в текущей выборке): 6 самых частых значений во всех данных
+  const COLOR_RANK = {};
+  function colorOf(k, v) {
+    if (!COLOR_RANK[k]) { const cnt = new Map(); for (const f of cfg.chart.universe()) cnt.set(f[k], (cnt.get(f[k]) || 0) + 1);
+      COLOR_RANK[k] = new Map([...cnt].filter(([x]) => x != null && x !== '—').sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(b[0], 'ru')).slice(0, PV_COLORS.length).map(([x], i) => [x, i])); }
+    return COLOR_RANK[k].has(v) ? COLOR_RANK[k].get(v) : -1;
+  }
+  let chartRO = null, chartData = null;
   const PAGE = 50, leafWord = n => crPlural(n, cfg.leafForms || ['проект', 'проекта', 'проектов']);
   let root = null, R = null, qT, factsCache = null;
 
@@ -1322,13 +1386,17 @@ function makePivot(cfg) {
         <div class="spacer"></div><span data-crpart="colsbtn" style="display:contents"></span><button class="btn" data-crexport>${I.dl} Скачать CSV</button></div>
       <p class="cr-note">${cfg.note}</p>
       <div class="kpis cr-kpis" data-crpart="kpis"></div>
+      <div class="card cr-chart" data-crpart="chart"></div>
       <div class="card"><div class="cr-bar" data-crpart="bar"></div><div class="dt cr-dt" data-crpart="table"></div></div>`;
     root.addEventListener('click', onClick); root.addEventListener('change', onChange); root.addEventListener('input', onInput); root.addEventListener('keydown', onKeydown);
+    root.addEventListener('mouseover', onOver); root.addEventListener('mouseleave', onOver);
+    if (window.ResizeObserver) { let raf; chartRO = new ResizeObserver(() => { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => root && drawChart()); }); chartRO.observe(part('chart')); }
     root.querySelector('[data-crpart="table"]').addEventListener('scroll', e => e.target.classList.toggle('scrolled', e.target.scrollLeft > 0));
     render();
   }
   function unmount() {
-    if (root) { root.removeEventListener('click', onClick); root.removeEventListener('change', onChange); root.removeEventListener('input', onInput); root.removeEventListener('keydown', onKeydown); }
+    if (root) { root.removeEventListener('click', onClick); root.removeEventListener('change', onChange); root.removeEventListener('input', onInput); root.removeEventListener('keydown', onKeydown); root.removeEventListener('mouseover', onOver); root.removeEventListener('mouseleave', onOver); }
+    if (chartRO) { chartRO.disconnect(); chartRO = null; }
     if (ACTIVE === api) { ACTIVE = null; S.menu = null; $('#tpop').innerHTML = ''; }
     root = null;
     if (location.hash.startsWith(cfg.route)) try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
@@ -1336,13 +1404,85 @@ function makePivot(cfg) {
   const part = n => root && root.querySelector(`[data-crpart="${n}"]`);
   function render() {
     if (!root) return; compute();
-    renderHead(); part('kpis').innerHTML = cfg.kpis({ R, S, range, groupBy }); renderBar(); renderTable(); renderMenu(); writeHash();
+    renderHead(); part('kpis').innerHTML = cfg.kpis({ R, S, range, groupBy }); renderChart(); renderBar(); renderTable(); renderMenu(); writeHash();
   }
   function renderHead() {
     part('periods').innerHTML = cfg.periods.map(id => `<button class="${S.period === id ? 'on' : ''}" data-crperiod="${id}">${PV_PERIODS[id]}</button>`).join('');
     const [a, b] = range(), fi = root.querySelector('[data-crdate="from"]'), ti = root.querySelector('[data-crdate="to"]');
     part('colsbtn').innerHTML = `<button class="btn ${S.profile.hidden.length ? 'on' : ''}" data-crmenu="cols" data-key="">${I.cols} Колонки${S.profile.hidden.length ? ` <span class="cnt">${S.profile.hidden.length}</span>` : ''}</button>`;
     fi.value = a; ti.value = b; fi.max = b; ti.min = a; ti.max = iso(CR_TODAY);
+  }
+  /* ---- график: столбики по времени, цвет = группа 1-го уровня ---- */
+  function computeChart() {
+    const [a, b] = range(), a0 = pvDnum(a), b0 = pvDnum(b), span = b0 - a0 + 1, k = S.g1, metric = cfg.chart.metrics.find(m => m.k === S.chart.metric);
+    const mode = span <= 62 ? 'day' : span <= 400 ? 'week' : 'month';
+    const startOf = n => { if (mode === 'day') return n; const d = pvDate(n); if (mode === 'week') return n - (d.getUTCDay() + 6) % 7; return Math.round(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1) / DAY); };
+    const buckets = [], idx = new Map();
+    for (let n = a0; n <= b0; n++) { const st = startOf(n); if (!idx.has(st)) { idx.set(st, buckets.length); buckets.push({ st: Math.max(st, a0), en: n, v: {} }); } else buckets[idx.get(st)].en = n; }
+    const series = new Set();
+    const add = (f, day, v) => { if (!v || day < a0 || day > b0) return; const bk = buckets[idx.get(startOf(day))], c = colorOf(k, f[k]), key = c < 0 ? 'other' : 'c' + c; bk.v[key] = (bk.v[key] || 0) + v; series.add(key); };
+    for (const f of R.facts) cfg.chart.accumulate(f, metric.k, a0, b0, add);
+    const names = {}; for (const [v, i] of COLOR_RANK[k] || []) names['c' + i] = v; names.other = 'Другие';
+    const order = [...PV_COLORS.map((_, i) => 'c' + i), 'other'].filter(x => series.has(x));
+    const colorKey = key => key === 'other' ? PV_OTHER : PV_COLORS[+key.slice(1)];
+    return { buckets, mode, order, names, colorKey, metric, a0, b0 };
+  }
+  function bucketLabel(bk, mode, long) {
+    if (mode === 'day') return long ? fmtDate(pvIso(bk.st)) : pvDayLbl(bk.st);
+    if (mode === 'month') { const d = pvDate(bk.st); return (long ? PV_MON1[d.getUTCMonth()] : PV_MON1[d.getUTCMonth()]) + ' ' + d.getUTCFullYear(); }
+    return long ? `${fmtDate(pvIso(bk.st))} — ${fmtDate(pvIso(bk.en))}` : pvDayLbl(bk.st);
+  }
+  function renderChart() {
+    const el = part('chart'), ms = cfg.chart.metrics, open = S.chart.open;
+    el.classList.toggle('closed', !open);
+    el.innerHTML = `<div class="cr-ch-head"><button class="cr-ch-title" data-crchart="toggle" aria-expanded="${open}">${I.chev}<b>Динамика</b></button>
+        <div class="seg">${ms.map(m => `<button class="${S.chart.metric === m.k ? 'on' : ''}" data-crmetric="${m.k}">${esc(m.l)}</button>`).join('')}</div>
+        <span class="cr-ch-by">цвет — ${esc(DIMS[S.g1].label.toLowerCase())}</span><div class="spacer"></div><span class="cr-ch-step" data-crpart="chstep"></span></div>
+      ${open ? `<div class="cr-ch-body"><div class="cr-ch-plot" data-crpart="plot"></div><div class="cr-ch-tip" data-crpart="tip" hidden></div></div><div class="cr-ch-leg" data-crpart="leg"></div>${cfg.chart.note ? `<div class="cr-ch-note" data-crpart="chnote"></div>` : ''}` : ''}`;
+    if (!open) { chartData = null; return; }
+    chartData = computeChart(); drawChart();
+  }
+  function drawChart() {
+    const plot = part('plot'); if (!plot || !chartData) return;
+    const { buckets, mode, order, names, colorKey, metric } = chartData, vis = order.filter(x => !S.chart.hidden.has(x));
+    const W = Math.max(320, plot.clientWidth), Hh = 220, pl = 56, pr = 8, pt = 10, pb = 26, iw = W - pl - pr, ih = Hh - pt - pb;
+    const totals = buckets.map(bk => vis.reduce((s, x) => s + (bk.v[x] || 0), 0)), { top, step } = pvNiceMax(Math.max(0, ...totals));
+    const y = v => pt + ih - v / top * ih, bw = iw / buckets.length, barW = Math.max(2, Math.min(26, bw * .64));
+    let g = '';
+    for (let t = 0; t <= top + 1e-9; t += step) g += `<line x1="${pl}" x2="${W - pr}" y1="${y(t).toFixed(1)}" y2="${y(t).toFixed(1)}" class="${t ? 'gl' : 'bl'}"/><text x="${pl - 8}" y="${(y(t) + 3.5).toFixed(1)}" class="yl">${pvShort(t, metric.money)}</text>`;
+    const every = Math.max(1, Math.ceil(buckets.length / Math.max(2, Math.floor(iw / 78))));
+    buckets.forEach((bk, i) => {
+      const cx = pl + bw * i + bw / 2; let base = 0, segs = vis.filter(x => bk.v[x] > 0);
+      segs.forEach((x, j) => {
+        const v = bk.v[x], y0 = y(base), y1 = y(base + v), last = j === segs.length - 1, gap = j ? 1 : 0, h = Math.max(0, y0 - y1 - gap); base += v;
+        if (h <= 0) return; const x0 = cx - barW / 2, yt = y0 - gap - h, r = last ? Math.min(3, barW / 2, h) : 0;
+        g += r ? `<path d="M${x0},${y0 - gap}V${yt + r}Q${x0},${yt} ${x0 + r},${yt}H${x0 + barW - r}Q${x0 + barW},${yt} ${x0 + barW},${yt + r}V${y0 - gap}Z" fill="${colorKey(x)}"/>` : `<rect x="${x0}" y="${yt}" width="${barW}" height="${h}" fill="${colorKey(x)}"/>`;
+      });
+      if (i % every === 0) g += `<text x="${cx.toFixed(1)}" y="${Hh - 8}" class="xl">${bucketLabel(bk, mode)}</text>`;
+      g += `<rect x="${(pl + bw * i).toFixed(1)}" y="${pt}" width="${bw.toFixed(1)}" height="${ih}" class="hit" data-crbar="${i}"/>`;
+    });
+    plot.innerHTML = `<svg width="${W}" height="${Hh}" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="${esc(metric.l)} по ${mode === 'day' ? 'дням' : mode === 'week' ? 'неделям' : 'месяцам'}">${g}</svg>`;
+    part('chstep').textContent = 'по ' + (mode === 'day' ? 'дням' : mode === 'week' ? 'неделям' : 'месяцам');
+    part('leg').innerHTML = order.length ? order.map(x => `<button class="cr-lg ${S.chart.hidden.has(x) ? 'off' : ''}" data-crleg="${x}" title="${S.chart.hidden.has(x) ? 'Показать' : 'Скрыть'} на графике"><i style="background:${colorKey(x)}"></i>${esc(x === 'other' ? 'Другие' : groupLabel(names[x]))}</button>`).join('') : '<span class="cr-ch-empty">Нет данных за период</span>';
+    const nt = part('chnote'); if (nt) nt.textContent = cfg.chart.note(metric.k) || '';
+  }
+  function showTip(i) {
+    const tip = part('tip'); if (!tip || !chartData) return;
+    root.querySelectorAll('.cr-ch-plot .hit.on').forEach(x => x.classList.remove('on'));
+    if (i == null) { tip.hidden = true; return; }
+    const { buckets, mode, order, names, colorKey, metric } = chartData, bk = buckets[i], vis = order.filter(x => !S.chart.hidden.has(x));
+    const rows = vis.filter(x => bk.v[x]).sort((p, q) => bk.v[q] - bk.v[p]), tot = rows.reduce((s, x) => s + bk.v[x], 0), fmt = v => metric.money ? crMoney(v) : fmtNum(Math.round(v));
+    const hit = root.querySelector(`.cr-ch-plot [data-crbar="${i}"]`); hit.classList.add('on');
+    tip.innerHTML = `<div class="th"><span>${bucketLabel(bk, mode, true)}</span><b>${fmt(tot)}</b></div>${rows.map(x => `<div class="tr"><i style="background:${colorKey(x)}"></i><span>${esc(x === 'other' ? 'Другие' : groupLabel(names[x]))}</span><b>${fmt(bk.v[x])}</b></div>`).join('') || '<div class="tr"><span class="dash">нет данных</span></div>'}
+      <div class="tf">Клик — показать ${mode === 'day' ? 'этот день' : mode === 'week' ? 'эту неделю' : 'этот месяц'}</div>`;
+    tip.hidden = false;
+    const body = tip.parentElement, hr = hit.getBoundingClientRect(), br = body.getBoundingClientRect(), tw = tip.offsetWidth;
+    let left = hr.right - br.left + 8; if (left + tw > br.width) left = hr.left - br.left - tw - 8; tip.style.left = Math.max(0, left) + 'px'; tip.style.top = '6px';
+  }
+  function onOver(e) {
+    if (e.type === 'mouseleave') return showTip(null);
+    const b = e.target.closest && e.target.closest('[data-crbar]'); if (b) return showTip(+b.dataset.crbar);
+    if (!e.target.closest || !e.target.closest('.cr-ch-tip')) showTip(null);
   }
   function renderBar() {
     const fBtn = k => { const v = S.filters[k], on = v && v.length; return `<button class="btn cr-f ${on ? 'on' : ''}" data-crmenu="filter" data-key="${k}">${DIMS[k].label}: <b>${on ? (v.length === 1 ? esc(groupLabel(v[0])) : v.length + ' ' + crPlural(v.length, ['значение', 'значения', 'значений'])) : 'все'}</b>${I.chev}</button>`; };
@@ -1377,7 +1517,7 @@ function makePivot(cfg) {
   function row(n, depth, cs) {
     const isG = n.kind !== 'leaf', open = isG && S.open.has(n.path);
     const name = isG
-      ? `<button class="cr-tg" data-crtoggle="${esc(n.path)}" aria-expanded="${open}">${I.chev}</button><span class="cr-gl${groupLabel(n.label) !== n.label ? ' cr-none' : ''}">${esc(groupLabel(n.label))}</span>`
+      ? `<button class="cr-tg" data-crtoggle="${esc(n.path)}" aria-expanded="${open}">${I.chev}</button>${n.kind === 'g1' && S.chart.open ? `<i class="cr-dot" style="background:${(c => c < 0 ? PV_OTHER : PV_COLORS[c])(colorOf(S.g1, n.label))}"></i>` : ''}<span class="cr-gl${groupLabel(n.label) !== n.label ? ' cr-none' : ''}">${esc(groupLabel(n.label))}</span>`
       : `<span class="cr-pn link" title="${esc(n.label)}">${esc(n.label)}</span>`;
     return `<tr class="cr-${n.kind}${open ? ' open' : ''}"${isG ? ` data-crrow="${esc(n.path)}"` : ''}><td class="cr-name pinned pinned-last" style="left:0"><div class="cr-in" style="padding-left:${depth * 22}px">${name}</div></td>${cs.map(c => cell(n, c)).join('')}</tr>`;
   }
@@ -1474,6 +1614,10 @@ function makePivot(cfg) {
   function onClick(e) {
     const t = e.target, c = s => t.closest(s);
     const mb = c('[data-crmenu]'); if (mb) { e.stopPropagation(); const { crmenu: kind, key } = mb.dataset; if (S.menu && S.menu.kind === kind && S.menu.key === key) return closeMenu(); return openMenu(kind, key, mb); }
+    if (c('[data-crchart="toggle"]')) { S.chart.open = !S.chart.open; saveChart(); return render(); }
+    const mt = c('[data-crmetric]'); if (mt) { S.chart.metric = mt.dataset.crmetric; saveChart(); renderChart(); return; }
+    const lg = c('[data-crleg]'); if (lg) { const x = lg.dataset.crleg; S.chart.hidden.has(x) ? S.chart.hidden.delete(x) : S.chart.hidden.add(x); return drawChart(); }
+    const br = c('[data-crbar]'); if (br && chartData) { const bk = chartData.buckets[+br.dataset.crbar]; S.from = pvIso(bk.st); S.to = pvIso(bk.en); S.period = 'custom'; S.more = {}; return render(); }
     const per = c('[data-crperiod]'); if (per) { S.period = per.dataset.crperiod; S.more = {}; return render(); }
     const tg = c('[data-crtoggle]') || (!c('button,a,input,.cr-pn') && c('[data-crrow]'));
     if (tg) { const p = tg.dataset.crtoggle ?? tg.dataset.crrow; S.open.has(p) ? S.open.delete(p) : S.open.add(p); return render(); }
@@ -1492,7 +1636,7 @@ function makePivot(cfg) {
       const [lvl, k] = gr.dataset.crgroup.split(':');
       if (lvl === '1') { if (k === S.g2) S.g2 = S.g1; S.g1 = k; } else if (!k) S.g2 = null; else if (k === S.g1) { if (S.g2) { S.g1 = S.g2; S.g2 = k; } } else S.g2 = k;
       if (S.g1 === S.g2) S.g2 = null;
-      S.open.clear(); S.more = {}; S.menu = null; saveGroup(); return render();
+      S.open.clear(); S.more = {}; S.menu = null; S.chart.hidden.clear(); saveGroup(); return render();
     }
     const fc = c('[data-crfclear]'); if (fc) { delete S.filters[fc.dataset.crfclear]; S.more = {}; return render(); }
     if (c('.cr-pn')) return toast('Переход в проект — в реальной CRM откроется карточка проекта');
@@ -1524,6 +1668,11 @@ const COST = makePivot({
   dims: CR_DIMS, groupKeys: CR_DIM_KEYS, defaultGroup: ['team', 'provider'], cols: CR_COLS, minDate: CR_DATA.minDate,
   periods: ['today', '7d', '30d', 'month', 'prev', 'all'], defaultPeriod: '30d', defaultSort: { key: 'total', dir: 'desc' },
   facts: (a, b) => CR_DATA.facts.filter(f => f.date >= a && f.date <= b),
+  chart: {
+    metrics: [{ k: 'total', l: 'Итого $', money: true }, { k: 'text', l: 'Текст $', money: true }, { k: 'img', l: 'Картинки $', money: true }, { k: 'fields', l: 'Полей' }, { k: 'errors', l: 'Ошибок' }],
+    universe: () => CR_DATA.facts,
+    accumulate: (f, m, a0, b0, add) => add(f, f.dnum ?? (f.dnum = pvDnum(f.date)), m === 'total' ? f.text + f.img : f[m]),
+  },
   search: (f, q) => f.name.toLowerCase().includes(q) || String(f.pid).includes(q),
   leafLabel: f => f.name, emptyText: 'За выбранный период и фильтры расходов нет.', filterNote: 'Число — проектов с генерациями за период.',
   agg(a, f) {
@@ -1594,7 +1743,7 @@ const PR_DATA = (() => {
   }
   const sum = (p, c, a, b) => { const lo = Math.max(a, p.launchIdx), hi = Math.min(b, todayIdx); return lo > hi ? 0 : c[hi - p.launchIdx + 1] - c[lo - p.launchIdx]; };
   return {
-    projects, minDate: iso(START),
+    projects, minDate: iso(START), startDnum: pvDnum(iso(START)), todayIdx,
     facts(a, b) {
       const ai = dayIdx(new Date(a + 'T00:00')), bi = dayIdx(new Date(b + 'T00:00'));
       return projects.filter(p => p.launch >= a && p.launch <= b).map(p => Object.assign({}, p, { impressions: sum(p, p.cimp, ai, bi), clicks: sum(p, p.cclk, ai, bi) }));
@@ -1626,7 +1775,18 @@ const PROJR = makePivot({
   note: 'Период отбирает проекты по дате запуска; показы и клики Google Search Console считаются за тот же период. «Статус» и «Тип проекта» пока не заполняются.',
   dims: PR_DIMS, groupKeys: Object.keys(PR_DIMS), defaultGroup: ['team', 'scheme'], cols: PR_COLS, defaultHidden: ['id'], minDate: PR_DATA.minDate,
   periods: ['today', '7d', '30d', 'month', 'prev', 'year', 'all'], defaultPeriod: 'all', defaultSort: { key: 'clicks', dir: 'desc' },
-  facts: (a, b) => PR_DATA.facts(a, b), allValues: k => PR_DATA.projects.map(p => p[k]),
+  facts: (a, b) => PR_DATA.facts(a, b),
+  chart: {
+    metrics: [{ k: 'clicks', l: 'Клики' }, { k: 'impressions', l: 'Показы' }, { k: 'launches', l: 'Запуски сайтов' }],
+    universe: () => PR_DATA.projects,
+    accumulate(f, m, a0, b0, add) {
+      if (m === 'launches') return add(f, PR_DATA.startDnum + f.launchIdx, 1);
+      const c = m === 'clicks' ? f.cclk : f.cimp, L = f.launchIdx, from = Math.max(a0 - PR_DATA.startDnum, L), to = Math.min(b0 - PR_DATA.startDnum, PR_DATA.todayIdx);
+      for (let d = from; d <= to; d++) add(f, PR_DATA.startDnum + d, c[d - L + 1] - c[d - L]);
+    },
+    note: m => m === 'launches' ? '' : 'Учитывается трафик только сайтов, запущенных в выбранном периоде, поэтому в начале периода значения ниже: сайты ещё набирают трафик.',
+  },
+  allValues: k => PR_DATA.projects.map(p => p[k]),
   search: (f, q) => f.name.toLowerCase().includes(q) || String(f.pid).includes(q) || f.domains.some(d => d.includes(q)),
   searchPlaceholder: 'Проект, домен или ID…', leafLabel: f => f.name, emptyText: 'За выбранный период нет запущенных проектов.', filterNote: 'Число — проектов, запущенных за период.',
   agg(a, f) {

@@ -1209,6 +1209,11 @@ const COST = (() => {
     sort: { key: 'total', dir: 'desc' }, open: new Set(), more: {}, menu: null, fsearch: '', hashRead: false,
   };
   Object.assign(S, store.get(SK + 'group', {}));
+  const DEFAULT_PROFILE = () => ({ order: CR_COLS.map(c => c.k), hidden: [], pinned: [] });
+  S.profile = Object.assign(DEFAULT_PROFILE(), store.get(SK + 'profile', {}));
+  for (const c of CR_COLS) if (!S.profile.order.includes(c.k)) S.profile.order.push(c.k);
+  const saveProfile = () => store.set(SK + 'profile', { order: S.profile.order, hidden: S.profile.hidden });
+  const COLMAP = Object.fromEntries(CR_COLS.map(c => [c.k, c]));
   let root = null, R = null, qT;
 
   function range() {
@@ -1267,7 +1272,7 @@ const COST = (() => {
     R = { facts, total, tree };
   }
   const hiddenCols = () => new Set([S.g1, S.g2].filter(Boolean));
-  const cols = () => CR_COLS.filter(c => !hiddenCols().has(c.k));
+  const cols = () => { const g = hiddenCols(); return S.profile.order.map(k => COLMAP[k]).filter(c => c && !g.has(c.k) && !S.profile.hidden.includes(c.k)); };
 
   /* ---- url ---- */
   function writeHash() {
@@ -1297,7 +1302,7 @@ const COST = (() => {
     root = container; ACTIVE = api;
     root.innerHTML = `<div class="page-head cr-head"><h1>Финансовый отчёт</h1><div class="seg" data-crpart="periods"></div>
         <div class="cr-dates"><input type="date" data-crdate="from"><span>—</span><input type="date" data-crdate="to"></div>
-        <div class="spacer"></div><button class="btn" data-crexport>${I.dl} Скачать CSV</button></div>
+        <div class="spacer"></div><span data-crpart="colsbtn" style="display:contents"></span><button class="btn" data-crexport>${I.dl} Скачать CSV</button></div>
       <p class="cr-note">Расход на генерацию контента — прикидка по токенам (ориентир, не счёт поставщика). Цена текста записывается с 21.09.2026 — более ранние генерации в сумму не входят (видны в столбце «Без цены»), картинок (логотипы, фавиконы, изображения блоков) — с 29.09.2026.</p>
       <div class="kpis cr-kpis" data-crpart="kpis"></div>
       <div class="card"><div class="cr-bar" data-crpart="bar"></div><div class="dt cr-dt" data-crpart="table"></div></div>`;
@@ -1319,6 +1324,7 @@ const COST = (() => {
   function renderHead() {
     part('periods').innerHTML = CR_PERIODS.map(([id, l]) => `<button class="${S.period === id ? 'on' : ''}" data-crperiod="${id}">${l}</button>`).join('');
     const [a, b] = range(); const fi = root.querySelector('[data-crdate="from"]'), ti = root.querySelector('[data-crdate="to"]');
+    part('colsbtn').innerHTML = `<button class="btn ${S.profile.hidden.length ? 'on' : ''}" data-crmenu="cols" data-key="">${I.cols} Колонки${S.profile.hidden.length ? ` <span class="cnt">${S.profile.hidden.length}</span>` : ''}</button>`;
     fi.value = a; ti.value = b; fi.max = b; ti.min = a; ti.max = iso(CR_TODAY);
   }
   function renderKpis() {
@@ -1420,9 +1426,10 @@ const COST = (() => {
     const el = $('#tpop'); if (!S.menu || ACTIVE !== api) { el.innerHTML = ''; return; }
     const { kind, key } = S.menu; let anchor = S.menu.anchor;
     if (!document.body.contains(anchor)) { anchor = root.querySelector(`[data-crmenu="${kind}"][data-key="${key}"]`); if (!anchor) { S.menu = null; el.innerHTML = ''; return; } S.menu.anchor = anchor; }
-    el.innerHTML = `<div class="tpop" role="menu">${kind === 'group' ? groupMenu(key) : filterMenu(key)}</div>`;
+    el.innerHTML = `<div class="tpop" role="menu">${kind === 'group' ? groupMenu(key) : kind === 'cols' ? colsMenu() : filterMenu(key)}</div>`;
     const pop = el.firstElementChild, r = anchor.getBoundingClientRect(); pop.style.top = (r.bottom + 6) + 'px';
-    pop.style.left = Math.max(8, Math.min(r.left, window.innerWidth - pop.offsetWidth - 8)) + 'px';
+    pop.style.left = Math.max(8, Math.min(kind === 'cols' ? r.right - pop.offsetWidth : r.left, window.innerWidth - pop.offsetWidth - 8)) + 'px';
+    const h = pop.offsetHeight; if (r.bottom + 6 + h > window.innerHeight - 8) pop.style.top = Math.max(8, r.top - 6 - h) + 'px';
     const fs = pop.querySelector('.fsearch'); if (fs && S.menu.focusSearch) { fs.focus(); fs.setSelectionRange(fs.value.length, fs.value.length); }
     renderBarState();
   }
@@ -1432,6 +1439,14 @@ const COST = (() => {
       CR_DIM_KEYS.map(k => { const swap = k === other && cur; if (k === other && !cur) return `<button class="pi" disabled style="color:var(--muted)">${CR_DIMS[k].label}<span class="k">уже 1-й уровень</span></button>`;
         return `<button class="pi ${cur === k ? 'on' : ''}" data-crgroup="${level}:${k}">${CR_DIMS[k].label}${swap ? '<span class="k">поменять уровни местами</span>' : cur === k ? `<span class="k">${I.check}</span>` : ''}</button>`; }).join('') +
       (level === '2' ? `<hr><button class="pi ${!S.g2 ? 'on' : ''}" data-crgroup="2:">Без 2-го уровня</button>` : '');
+  }
+  function colsMenu() {
+    const g = hiddenCols(), { order, hidden } = S.profile;
+    return `<div class="ph"><span>Столбцы</span><span class="link" data-crcolsreset>По умолчанию</span></div>
+      <ul class="cols"><li class="fixed"><span class="grip" style="visibility:hidden">${I.grip}</span><input type="checkbox" checked disabled><span class="nm">${[CR_DIMS[S.g1].label, S.g2 && CR_DIMS[S.g2].label, 'Проект'].filter(Boolean).join(' › ')}</span></li>
+      ${order.map(k => { const c = COLMAP[k], grp = g.has(k);
+        return `<li draggable="true" data-drag="${k}"${grp ? ' title="Значение показано в дереве группировки"' : ''}><span class="grip">${I.grip}</span><input type="checkbox" data-crcolvis="${k}" id="crcv-${k}" ${hidden.includes(k) ? '' : 'checked'} ${grp ? 'disabled' : ''}><label class="nm" for="crcv-${k}"${grp ? ' style="color:var(--muted)"' : ''}>${esc(c.t && c.l.length < 8 ? c.t : c.l)}</label>${grp ? '<span class="k" style="color:var(--muted);font-size:11px">в группировке</span>' : ''}</li>`; }).join('')}</ul>
+      <div class="note">Перетащите строку, чтобы изменить порядок. Столбцы измерений, по которым идёт группировка, скрываются автоматически.</div>`;
   }
   function filterMenu(k) {
     const counts = new Map(); for (const f of baseFacts(k)) { if (!counts.has(f[k])) counts.set(f[k], new Set()); counts.get(f[k]).add(f.pid); }
@@ -1482,6 +1497,7 @@ const COST = (() => {
     if (c('[data-crclearq]')) { S.q = ''; return render(); }
     if (c('[data-crreset]')) { S.filters = {}; S.q = ''; S.menu = null; return render(); }
     if (c('[data-crexport]')) return doExport();
+    if (c('[data-crcolsreset]')) { e.stopPropagation(); Object.assign(S.profile, DEFAULT_PROFILE()); saveProfile(); return render(); }
     const gr = c('[data-crgroup]'); if (gr) {
       const [lvl, k] = gr.dataset.crgroup.split(':');
       if (lvl === '1') { if (k === S.g2) S.g2 = S.g1; S.g1 = k; } else if (!k) S.g2 = null; else if (k === S.g1) { if (S.g2) { S.g1 = S.g2; S.g2 = k; } } else S.g2 = k;
@@ -1494,6 +1510,7 @@ const COST = (() => {
   function onChange(e) {
     const t = e.target, d = t.dataset;
     if (d.crfval) { const k = d.crfval, cur = new Set(S.filters[k] || []); t.checked ? cur.add(t.value) : cur.delete(t.value); S.filters[k] = [...cur]; if (!cur.size) delete S.filters[k]; S.more = {}; return render(); }
+    if (d.crcolvis) { const k = d.crcolvis, h = S.profile.hidden; t.checked ? h.splice(h.indexOf(k), 1) : h.push(k); saveProfile(); return render(); }
     if (d.crdate) { const [a, b] = range(); S.from = d.crdate === 'from' ? (t.value || a) : a; S.to = d.crdate === 'to' ? (t.value || b) : b; if (S.from > S.to) [S.from, S.to] = [S.to, S.from]; S.period = 'custom'; S.more = {}; return render(); }
   }
   function onInput(e) {
@@ -1505,7 +1522,7 @@ const COST = (() => {
     if (t.dataset.crfsearch != null) { S.fsearch = t.value; S.menu.focusSearch = true; renderMenu(); }
   }
   function onKeydown(e) { if (e.key === 'Escape' && e.target.classList.contains('cr-q') && S.q) { S.q = ''; render(); root.querySelector('.cr-q').focus(); } }
-  const api = { key: 'cost-report', mount, unmount, render, onClick, onChange, onInput, onKeydown, closeMenu, hasMenu: () => !!S.menu,
+  const api = { key: 'cost-report', mount, unmount, render, onClick, onChange, onInput, onKeydown, closeMenu, hasMenu: () => !!S.menu, S, saveProfile,
     focusSearch: () => { const q = root && root.querySelector('.cr-q'); if (q) q.focus(); } };
   return api;
 })();
